@@ -507,40 +507,39 @@ of classical PDE optimization algorithms.
 <div class="theorem-column">
 
 <div class="theorem-box">
+  <div class="theorem-title">Per-Iteration Complexity (Dominant Terms)</div>
 
-<div class="theorem-title">
-Theorem 1 — Per-Iteration Complexity
-</div>
+  <p>
+    Ignoring lower-order terms, the per-iteration runtime is dominated by:
+  </p>
 
-<p>
-Consider one iteration of the hybrid adjoint algorithm.
-Assume the discretized Jacobian matrix \(A(u)\)
-is sparse and has condition number \(\kappa\).
-</p>
+  \[
+  T_{\text{iter}}
+  \approx
+  O\!\left(
+  (m+1)\, s n \kappa \log\!\frac{1}{\varepsilon_s}
+  \;+\;
+  n_u\,(\log n)\, s^2 \kappa^2 \varepsilon^{-3}
+  \right).
+  \]
 
-<p>
-If the adjoint equation is solved using a quantum
-linear system algorithm and the gradient components
-are estimated using swap-test measurements,
-then the total computational cost of one iteration
-scales as
-</p>
+  <p style="margin-top:10px;">
+    (First term: classical state solves + line search. Second term: quantum adjoint preparation and swap-test gradient estimation.)
+  </p>
 
-\[
-T_{\text{iter}}
-=
-O\!\left(
-(m+1)\,sn\kappa\log\!\frac{1}{\varepsilon_s}
-+
-n_u\,\log(n)\,s^2\kappa^2\varepsilon^{-3}
-\right).
-\]
+  <p style="margin-top:12px;">
+  <strong>Notation.</strong>
+  </p>
 
-<p>
-Here \(n\) is the number of state variables,
-\(n_u\) the number of control variables,
-and \(s\) the sparsity of the PDE discretization.
-</p>
+  <ul>
+    <li><strong>n</strong> – number of state variables (grid unknowns in the PDE discretization)</li>
+    <li><strong>n<sub>u</sub></strong> – number of control variables in the optimization problem</li>
+    <li><strong>s</strong> – sparsity of the Jacobian matrix (maximum number of nonzero entries per row)</li>
+    <li><strong>κ</strong> – condition number of the discretized PDE Jacobian</li>
+    <li><strong>ε<sub>s</sub></strong> – tolerance used for the classical Krylov solver in the state equation</li>
+    <li><strong>ε</strong> – accuracy parameter used in the quantum routines</li>
+    <li><strong>m</strong> – maximum number of additional state solves performed during the line search</li>
+  </ul>
 
 </div>
 
