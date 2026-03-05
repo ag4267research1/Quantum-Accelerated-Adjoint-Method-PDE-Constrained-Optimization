@@ -162,6 +162,18 @@
     ]
   }
   </script>
+
+  <script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  },
+  svg: { fontCache: 'global' }
+};
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
   
   <!-- Website/Organization Structured Data -->
   <script type="application/ld+json">
@@ -350,6 +362,65 @@
 </section>
 <!-- End paper abstract -->
 
+<!-- Key Idea -->
+
+<section>
+<h2>Key Idea</h2>
+
+<p>
+The central idea of this work is to accelerate gradient evaluation in 
+PDE-constrained optimization by replacing the classical adjoint linear solve 
+with a quantum linear system algorithm (QLSA).
+</p>
+
+<p>
+In classical adjoint-based optimization, the adjoint variable <em>p</em> is obtained 
+by solving the linear system
+</p>
+
+$$
+A(u)^T p = \frac{\partial J}{\partial x}(x,u)
+$$
+
+<p>
+where \(A(u)\) is the Jacobian of the discretized PDE constraint and 
+\(J(x,u)\) is the objective functional.
+</p>
+
+<p>
+Once the adjoint vector is computed, the reduced gradient of the objective 
+with respect to the control variables is given by
+</p>
+
+$$
+(\nabla \hat{J}(u))_i =
+\frac{\partial J}{\partial u_i}
+-
+\left\langle p,\frac{\partial c}{\partial u_i} \right\rangle .
+$$
+
+<p>
+The proposed hybrid quantum–classical method prepares the adjoint state
+using a quantum linear system algorithm
+</p>
+
+$$
+|p\rangle \propto A^{-T} g_x ,
+$$
+
+<p>
+where \(g_x = \partial J / \partial x\).
+Instead of reconstructing the full adjoint vector, the algorithm computes 
+the required inner products directly using quantum swap-test measurements.
+</p>
+
+<p>
+This avoids quantum state tomography and allows the reduced gradient 
+to be estimated while preserving the potential quantum speedup of the 
+linear-system solve.
+</p>
+
+</section>
 
 <!-- Image carousel -->
 <section class="hero is-small">
