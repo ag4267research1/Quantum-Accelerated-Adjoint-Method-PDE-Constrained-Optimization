@@ -783,3 +783,43 @@ a:focus {
 
 
 
+
+.method-theorem-section{
+  padding:80px 40px;
+}
+
+.container-grid{
+  display:grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap:60px;
+  max-width:1400px;
+  margin:auto;
+}
+
+.method-overview{
+  background:linear-gradient(135deg,#eef2ff,#f8fafc);
+  padding:40px;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  border-left:6px solid #6366f1;
+}
+
+.method-title{
+  font-size:32px;
+  font-weight:800;
+  margin-bottom:20px;
+}
+
+.theorem-column{
+  display:flex;
+  flex-direction:column;
+  gap:30px;
+}
+
+.theorem-box{
+  background:white;
+  padding:30px;
+  border-radius:14px;
+  border:1px solid #e2e8f0;
+  box-shadow:0 6px 18px rgba(0,0,0,0.06);
+}

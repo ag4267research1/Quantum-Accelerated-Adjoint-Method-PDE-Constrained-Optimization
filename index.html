@@ -424,6 +424,152 @@ to be estimated while preserving the potential quantum speedup of the
 linear-system solve.
 </p>
 
+<section class="method-theorem-section">
+
+<div class="container-grid">
+
+<!-- LEFT SIDE -->
+<div class="method-overview">
+
+<h2 class="method-title">Method Overview</h2>
+
+<p>
+We consider a PDE-constrained optimization problem where the objective
+depends implicitly on the state variable determined by a PDE constraint.
+The dominant cost arises from repeatedly solving large linear systems
+for the adjoint equation.
+</p>
+
+<p>
+Our method replaces the classical adjoint linear solve with a
+Quantum Linear System Algorithm (QLSA). The adjoint state is prepared
+as a quantum vector
+</p>
+
+$$
+A(u)^T p = \frac{\partial J}{\partial x}(x,u)
+$$
+
+<p>
+The reduced gradient is then computed via inner products
+</p>
+
+$$
+(\nabla \hat J(u))_i =
+\frac{\partial J}{\partial u_i}
+-
+\left\langle p,\frac{\partial c}{\partial u_i}\right\rangle
+$$
+
+<p>
+Instead of reconstructing the full adjoint vector, we estimate these
+inner products using quantum swap-test measurements, preserving the
+quantum advantage.
+</p>
+
+</div>
+
+<!-- RIGHT SIDE -->
+<div class="theorem-column">
+
+<div class="theorem-box">
+
+<h3>Theorem 1 — Adjoint Gradient Formula</h3>
+
+<p>
+Let the PDE constraint be
+</p>
+
+$$
+c(x,u)=0
+$$
+
+<p>
+and define the Lagrangian
+</p>
+
+$$
+L(x,u,p)=J(x,u)+\langle p,c(x,u)\rangle.
+$$
+
+<p>
+If the adjoint variable satisfies
+</p>
+
+$$
+A(u)^T p = \frac{\partial J}{\partial x}(x,u),
+$$
+
+<p>
+then the reduced gradient is
+</p>
+
+$$
+(\nabla \hat J(u))_i =
+\frac{\partial J}{\partial u_i}
+-
+\langle p,\frac{\partial c}{\partial u_i}\rangle .
+$$
+
+</div>
+
+
+<div class="theorem-box">
+
+<h3>Theorem 2 — QLSA Adjoint Preparation</h3>
+
+<p>
+Let \(A\) be an \(s\)-sparse matrix with condition number \(\kappa\).
+A quantum linear system algorithm prepares the normalized state
+</p>
+
+$$
+|p\rangle \propto A^{-T} g_x
+$$
+
+<p>
+with query complexity
+</p>
+
+$$
+O(\log(n)\, s^2 \kappa^2 \epsilon^{-1})
+$$
+
+<p>
+where \(n\) is the system dimension.
+</p>
+
+</div>
+
+
+<div class="theorem-box">
+
+<h3>Theorem 3 — Hybrid Gradient Complexity</h3>
+
+<p>
+Under sparse discretization assumptions, the per-iteration complexity
+of the hybrid algorithm is
+</p>
+
+$$
+T_{iter} =
+O((m+1)sn\kappa\log(1/\epsilon_s)
++ n_u\log(n)s^2\kappa^2\epsilon^{-3})
+$$
+
+<p>
+where \(n\) is the number of state variables and \(n_u\) the number of
+control variables.
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
 </section>
 
 <!-- Image carousel -->
