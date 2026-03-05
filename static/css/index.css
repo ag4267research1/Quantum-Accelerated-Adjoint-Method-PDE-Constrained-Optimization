@@ -782,26 +782,28 @@ a:focus {
 }
 
 
-
+/* Method + Theorem Layout */
 
 .method-theorem-section{
-  padding:80px 40px;
+  max-width:1400px;
+  margin:80px auto;
+  padding:40px;
 }
 
-.container-grid{
+.method-grid{
   display:grid;
-  grid-template-columns: 1.1fr 1fr;
+  grid-template-columns:1.2fr 1fr;
   gap:60px;
-  max-width:1400px;
-  margin:auto;
 }
+
+/* LEFT SIDE */
 
 .method-overview{
-  background:linear-gradient(135deg,#eef2ff,#f8fafc);
   padding:40px;
+  background:linear-gradient(135deg,#eef2ff,#f8fafc);
   border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.08);
   border-left:6px solid #6366f1;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
 }
 
 .method-title{
@@ -809,6 +811,14 @@ a:focus {
   font-weight:800;
   margin-bottom:20px;
 }
+
+.method-overview p{
+  font-size:17px;
+  line-height:1.8;
+  margin-bottom:18px;
+}
+
+/* RIGHT SIDE */
 
 .theorem-column{
   display:flex;
@@ -822,4 +832,16 @@ a:focus {
   border-radius:14px;
   border:1px solid #e2e8f0;
   box-shadow:0 6px 18px rgba(0,0,0,0.06);
+}
+
+.theorem-title{
+  font-size:22px;
+  font-weight:700;
+  margin-bottom:15px;
+  color:#1e293b;
+}
+
+.theorem-box p{
+  font-size:16px;
+  line-height:1.7;
 }

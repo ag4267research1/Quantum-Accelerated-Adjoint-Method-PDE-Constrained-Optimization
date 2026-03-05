@@ -428,120 +428,118 @@ linear-system solve.
 
 </section>
 
-
 <section class="method-theorem-section">
 
-<div class="container-grid">
+<div class="method-grid">
 
-<!-- LEFT SIDE -->
+<!-- LEFT SIDE : METHOD OVERVIEW -->
+
 <div class="method-overview">
 
 <h2 class="method-title">Method Overview</h2>
 
 <p>
-We consider a PDE-constrained optimization problem where the objective
-depends implicitly on the state variable determined by a PDE constraint.
-The dominant cost arises from repeatedly solving large linear systems
-for the adjoint equation.
+We consider PDE-constrained optimization problems where the goal is to
+minimize an objective function \(J(x,u)\) subject to a PDE constraint
+</p>
+
+\[
+c(x,u)=0.
+\]
+
+<p>
+In classical adjoint methods, the gradient of the reduced objective
+is obtained by solving an adjoint linear system
+</p>
+
+\[
+A(u)^T p = \frac{\partial J}{\partial x}(x,u).
+\]
+
+<p>
+For large discretized PDE systems this solve dominates the
+computational cost of every optimization iteration.
 </p>
 
 <p>
-Our method replaces the classical adjoint linear solve with a
-Quantum Linear System Algorithm (QLSA). The adjoint state is prepared
-as a quantum vector
+Our method replaces this classical adjoint solve with a
+<strong>quantum linear system algorithm</strong>.
+Instead of computing the full adjoint vector explicitly,
+the algorithm prepares a quantum state proportional to
 </p>
 
-$$
-A(u)^T p = \frac{\partial J}{\partial x}(x,u)
-$$
+\[
+|p\rangle \propto A^{-T} g_x ,
+\]
 
 <p>
-The reduced gradient is then computed via inner products
+where \(g_x = \partial J / \partial x\).
 </p>
 
-$$
-(\nabla \hat J(u))_i =
+<p>
+Using quantum swap-test measurements,
+the inner products required for the reduced gradient
+</p>
+
+\[
+(\nabla \hat J(u))_i
+=
 \frac{\partial J}{\partial u_i}
 -
-\left\langle p,\frac{\partial c}{\partial u_i}\right\rangle
-$$
+\left\langle
+p ,
+\frac{\partial c}{\partial u_i}
+\right\rangle
+\]
 
 <p>
-Instead of reconstructing the full adjoint vector, we estimate these
-inner products using quantum swap-test measurements, preserving the
-quantum advantage.
+can be estimated without reconstructing the full adjoint vector.
+This hybrid quantum–classical procedure reduces the cost
+of gradient evaluation while preserving the structure
+of classical PDE optimization algorithms.
 </p>
 
 </div>
 
-<!-- RIGHT SIDE -->
+
+<!-- RIGHT SIDE : THEOREMS -->
+
 <div class="theorem-column">
 
 <div class="theorem-box">
 
-<h3>Theorem 1 — Adjoint Gradient Formula</h3>
-
-<p>
-Let the PDE constraint be
-</p>
-
-$$
-c(x,u)=0
-$$
-
-<p>
-and define the Lagrangian
-</p>
-
-$$
-L(x,u,p)=J(x,u)+\langle p,c(x,u)\rangle.
-$$
-
-<p>
-If the adjoint variable satisfies
-</p>
-
-$$
-A(u)^T p = \frac{\partial J}{\partial x}(x,u),
-$$
-
-<p>
-then the reduced gradient is
-</p>
-
-$$
-(\nabla \hat J(u))_i =
-\frac{\partial J}{\partial u_i}
--
-\langle p,\frac{\partial c}{\partial u_i}\rangle .
-$$
-
+<div class="theorem-title">
+Theorem 1 — Per-Iteration Complexity
 </div>
 
-
-<div class="theorem-box">
-
-<h3>Theorem 2 — QLSA Adjoint Preparation</h3>
-
 <p>
-Let \(A\) be an \(s\)-sparse matrix with condition number \(\kappa\).
-A quantum linear system algorithm prepares the normalized state
+Consider one iteration of the hybrid adjoint algorithm.
+Assume the discretized Jacobian matrix \(A(u)\)
+is sparse and has condition number \(\kappa\).
 </p>
 
-$$
-|p\rangle \propto A^{-T} g_x
-$$
-
 <p>
-with query complexity
+If the adjoint equation is solved using a quantum
+linear system algorithm and the gradient components
+are estimated using swap-test measurements,
+then the total computational cost of one iteration
+scales as
 </p>
 
-$$
-O(\log(n)\, s^2 \kappa^2 \epsilon^{-1})
-$$
+\[
+T_{\text{iter}}
+=
+O\!\left(
+(m+1)\,sn\kappa\log\!\frac{1}{\varepsilon_s}
++
+n_u\,\log(n)\,s^2\kappa^2\varepsilon^{-3}
+\right).
+\]
 
 <p>
-where \(n\) is the system dimension.
+Here \(n\) is the number of state variables,
+\(n_u\) the number of control variables,
+and \(s\) the sparsity of the PDE discretization.
 </p>
 
 </div>
@@ -549,22 +547,54 @@ where \(n\) is the system dimension.
 
 <div class="theorem-box">
 
-<h3>Theorem 3 — Hybrid Gradient Complexity</h3>
+<div class="theorem-title">
+Theorem 2 — Convergence of the Hybrid Method
+</div>
 
 <p>
-Under sparse discretization assumptions, the per-iteration complexity
-of the hybrid algorithm is
+Assume the reduced objective function
+\(\hat J_h\) is continuously differentiable
+and bounded below, and that its gradient
+is Lipschitz continuous.
 </p>
 
-$$
-T_{iter} =
-O((m+1)sn\kappa\log(1/\epsilon_s)
-+ n_u\log(n)s^2\kappa^2\epsilon^{-3})
-$$
+<p>
+If the gradient estimates produced by the
+quantum procedure satisfy a controlled
+relative error bound
+</p>
+
+\[
+\|e^k\|_2
+\le
+\rho \,
+\|\nabla \hat J_h(u^k)\|_2 ,
+\]
 
 <p>
-where \(n\) is the number of state variables and \(n_u\) the number of
-control variables.
+and the optimization step sizes satisfy
+standard bounded step-size conditions,
+then the sequence of iterates \(u^k\)
+generated by the algorithm satisfies
+</p>
+
+\[
+\sum_{k=0}^{\infty}
+\|
+\nabla \hat J_h(u^k)
+\|_2^2
+< \infty,
+\qquad
+\lim_{k\to\infty}
+\|
+\nabla \hat J_h(u^k)
+\|_2 = 0.
+\]
+
+<p>
+Therefore every accumulation point of the
+iterates is a critical point of the reduced
+optimization problem.
 </p>
 
 </div>
@@ -574,6 +604,7 @@ control variables.
 </div>
 
 </section>
+
 <!-- Image carousel -->
 <section class="hero is-small">
   <div class="hero-body">
