@@ -330,6 +330,38 @@ body {
   border-radius: 2px;
 }
 
+/* Key Idea Highlight Section */
+
+.key-idea-section {
+  margin: 80px auto;
+  padding: 50px 60px;
+  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+  border-radius: var(--border-radius-lg);
+  border-left: 6px solid var(--primary-color);
+  box-shadow: var(--shadow-lg);
+  max-width: 1100px;
+}
+
+.key-idea-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 25px;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+}
+
+.key-idea-title span {
+  color: var(--primary-color);
+}
+
+.key-idea-section p {
+  font-size: 1.15rem;
+  color: var(--text-secondary);
+  line-height: 1.9;
+  text-align: center;
+}
+
 /* Content Improvements */
 .content.has-text-justified {
   font-size: 1.1rem;
