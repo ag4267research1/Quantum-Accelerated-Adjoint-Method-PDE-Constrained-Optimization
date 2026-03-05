@@ -437,67 +437,67 @@ linear-system solve.
 
 <h2 class="method-title">Method Overview</h2>
 
-<p>
-We consider PDE-constrained optimization problems where the goal is to
-minimize an objective function \(J(x,u)\) subject to a PDE constraint
-</p>
 
+<ol>
+
+<li>
+<strong>Initialize:</strong> choose an initial control \(u^0\).
+</li>
+
+<li>
+<strong>State solve (classical):</strong> solve the discretized PDE
 \[
-c(x,u)=0.
+c(x^k,u^k)=0
 \]
+to obtain the state \(x^k\).
+</li>
 
-<p>
-In classical adjoint methods, the gradient of the reduced objective
-is obtained by solving an adjoint linear system
-</p>
-
+<li>
+<strong>Objective evaluation:</strong> compute the reduced objective
 \[
-A(u)^T p = \frac{\partial J}{\partial x}(x,u).
+\hat J(u^k)=J(x^k,u^k).
 \]
+</li>
 
-<p>
-For large discretized PDE systems this solve dominates the
-computational cost of every optimization iteration.
-</p>
-
-<p>
-Our method replaces this classical adjoint solve with a
-<strong>quantum linear system algorithm</strong>.
-Instead of computing the full adjoint vector explicitly,
-the algorithm prepares a quantum state proportional to
-</p>
-
+<li>
+<strong>Derivative assembly:</strong> form the Jacobian
 \[
-|p\rangle \propto A^{-T} g_x ,
+A^k=\frac{\partial c}{\partial x}(x^k,u^k)
 \]
-
-<p>
-where \(g_x = \partial J / \partial x\).
-</p>
-
-<p>
-Using quantum swap-test measurements,
-the inner products required for the reduced gradient
-</p>
-
+and the state gradient
 \[
-(\nabla \hat J(u))_i
-=
-\frac{\partial J}{\partial u_i}
--
-\left\langle
-p ,
-\frac{\partial c}{\partial u_i}
-\right\rangle
+g_x^k=\frac{\partial J}{\partial x}(x^k,u^k).
 \]
+</li>
 
-<p>
-can be estimated without reconstructing the full adjoint vector.
-This hybrid quantum–classical procedure reduces the cost
-of gradient evaluation while preserving the structure
-of classical PDE optimization algorithms.
-</p>
+<li>
+<strong>Quantum adjoint solve:</strong> prepare the adjoint state
+\[
+|p^k\rangle \propto (A^k)^{-T} g_x^k
+\]
+using a quantum linear system algorithm.
+</li>
 
+<li>
+<strong>Gradient estimation:</strong> estimate
+\[
+\left\langle p^k,\frac{\partial c}{\partial u_i}\right\rangle
+\]
+for each control variable using swap-test measurements.
+</li>
+
+<li>
+<strong>Control update:</strong> update the control
+\[
+u^{k+1}=u^k-\alpha_k\nabla\hat J(u^k).
+\]
+</li>
+
+<li>
+<strong>Repeat</strong> until convergence.
+</li>
+
+</ol>
 </div>
 
 
