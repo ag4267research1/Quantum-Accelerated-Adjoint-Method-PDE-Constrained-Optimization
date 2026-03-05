@@ -845,3 +845,137 @@ a:focus {
   font-size:16px;
   line-height:1.7;
 }
+
+/* Experiments & Code (Under Construction) */
+
+.exp-code-section{
+  max-width:1400px;
+  margin:80px auto;
+  padding:0 40px;
+}
+
+.exp-code-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:30px;
+}
+
+.exp-card{
+  background: var(--background-primary);
+  border:1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding:28px;
+}
+
+.exp-card h2{
+  font-size:26px;
+  font-weight:800;
+  margin:0 0 10px 0;
+}
+
+.exp-subtitle{
+  color: var(--text-secondary);
+  margin:0 0 18px 0;
+  line-height:1.6;
+}
+
+.uc-banner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background: linear-gradient(135deg, #fff7ed, #fffbeb);
+  border:1px solid #fed7aa;
+  border-left:6px solid #fb923c;
+  border-radius: 14px;
+  padding:16px 16px;
+  margin-top:18px;
+}
+
+.uc-left{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.uc-dot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background:#fb923c;
+  box-shadow: 0 0 0 6px rgba(251,146,60,0.15);
+}
+
+.uc-title{
+  font-weight:800;
+  letter-spacing:0.4px;
+}
+
+.uc-text{
+  color: var(--text-secondary);
+  font-size:14px;
+  margin-top:2px;
+}
+
+.uc-pill{
+  font-size:12px;
+  font-weight:700;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#fb923c;
+  color:white;
+  white-space:nowrap;
+}
+
+.exp-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:18px;
+}
+
+.exp-actions a{
+  text-decoration:none;
+}
+
+.exp-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius: 12px;
+  border:1px solid var(--border-color);
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  font-weight:700;
+  transition: var(--transition);
+}
+
+.exp-btn:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color);
+}
+
+.exp-btn.primary{
+  background: var(--primary-color);
+  color:white;
+  border-color: var(--primary-color);
+}
+
+.exp-btn.primary:hover{
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.exp-list{
+  margin:14px 0 0 18px;
+  color: var(--text-secondary);
+  line-height:1.7;
+}
+
+@media screen and (max-width: 900px){
+  .exp-code-section{ padding:0 18px; }
+  .exp-code-grid{ grid-template-columns: 1fr; }
+}
