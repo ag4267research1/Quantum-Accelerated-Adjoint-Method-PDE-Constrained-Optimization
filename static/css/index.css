@@ -982,8 +982,14 @@ a:focus {
 
 /* ===== Carousel size + centering fix ===== */
 #results-carousel {
-  max-width: 900px;
+  max-width: 750px;
   margin: 0 auto;
+}
+
+#results-carousel .slider-item {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
 }
 
 #results-carousel .item {
@@ -1003,24 +1009,12 @@ a:focus {
   max-height: 300px !important;
   width: auto !important;
   height: auto !important;
-  object-fit: contain !important;
 }
 
 #results-carousel .subtitle {
-  max-width: 700px;
+  max-width: 600px;
   margin: 1rem auto 0 auto !important;
   text-align: center !important;
   font-size: 0.85rem !important;
 }
-
-#results-carousel .slider-item {
-  display: flex !important;
-  justify-content: center !important;
-}
-
-#results-carousel .slider-item .item {
-  width: 100%;
-}
-
-
 }
