@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -62,16 +61,22 @@ class Optimizer:
         ----------
         x0 : np.ndarray
             Initial control.
+
         max_iter : int
             Maximum number of optimization iterations.
+
         tol : float
             Stopping tolerance on gradient norm.
+
         alpha : float
             Default step size if no line search is supplied.
+
         store_history : bool
             Whether to store objective / gradient history.
+
         verbose : bool
             Whether to print progress.
+
         kwargs : Any
             Extra arguments forwarded to subroutines.
 
@@ -79,6 +84,7 @@ class Optimizer:
         -------
         OptimizationResult
         """
+
         x = np.array(x0, dtype=float).copy()
 
         history = {
@@ -92,6 +98,7 @@ class Optimizer:
         grad = np.zeros_like(x)
 
         for k in range(max_iter):
+
             # -------------------------------------------------
             # Step 1: Solve state equation c(u,x)=0
             # -------------------------------------------------
@@ -126,9 +133,24 @@ class Optimizer:
             # -------------------------------------------------
             # Step 4: Solve adjoint equation A^T p = g_u
             # Classical: returns vector p
-            # Quantum: returns a state
+            # Quantum: returns a quantum state and scaling
             # -------------------------------------------------
-            p = self.adjoint_solver(A=A, rhs=g_u, model=self.model, u=u, x=x, **kwargs)
+            adjoint_output = self.adjoint_solver(
+                A=A,
+                rhs=g_u,
+                model=self.model,
+                u=u,
+                x=x,
+                **kwargs,
+            )
+
+            # Classical solver returns p
+            # Quantum solver may return (p_state, scale)
+            if isinstance(adjoint_output, tuple):
+                p_state, p_scale = adjoint_output
+            else:
+                p_state = adjoint_output
+                p_scale = 1.0
 
             # -------------------------------------------------
             # Step 5: Assemble reduced gradient
@@ -137,9 +159,23 @@ class Optimizer:
             grad = np.zeros_like(x, dtype=float)
 
             for i in range(len(x)):
+
+                # derivative of constraint wrt control variable
                 w_i = self.model.dc_dx_i(u, x, i)
-                z_i = self.inner_product(left=w_i, right=p, model=self.model, u=u, x=x, i=i, **kwargs)
-                grad[i] = g_x[i] - z_i
+
+                # compute <p , dc/dx_i>
+                z_i = self.inner_product(
+                    left=p_state,
+                    right=w_i,
+                    model=self.model,
+                    u=u,
+                    x=x,
+                    i=i,
+                    **kwargs
+                )
+
+                # reduced gradient component
+                grad[i] = g_x[i] - p_scale * z_i
 
             grad_norm = float(np.linalg.norm(grad))
 
