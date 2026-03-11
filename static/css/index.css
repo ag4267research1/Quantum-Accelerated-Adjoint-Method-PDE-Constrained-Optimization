@@ -980,41 +980,18 @@ a:focus {
   .exp-code-grid{ grid-template-columns: 1fr; }
 
 
-/* ===== Carousel size + centering fix ===== */
-#results-carousel {
-  max-width: 750px;
-  margin: 0 auto;
-}
-
+/* Fix bulma-carousel alignment */
 #results-carousel .slider-item {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
+  display: flex;
+  justify-content: center;
 }
 
-#results-carousel .item {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-  padding: 0.75rem !important;
+/* Control figure size */
+#results-carousel img {
+  width: 60%;
+  height: auto;
+  margin: auto;
+  display: block;
 }
 
-#results-carousel .item img,
-#results-carousel .item video {
-  display: block !important;
-  margin: 0 auto !important;
-  max-width: 65% !important;
-  max-height: 300px !important;
-  width: auto !important;
-  height: auto !important;
-}
-
-#results-carousel .subtitle {
-  max-width: 600px;
-  margin: 1rem auto 0 auto !important;
-  text-align: center !important;
-  font-size: 0.85rem !important;
-}
 }
