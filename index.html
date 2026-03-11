@@ -253,7 +253,7 @@ window.MathJax = {
         <div class="columns is-centered">
           <div class="column has-text-centered">
             <!-- TODO: Replace with your paper title -->
-            <h1 class="title is-1 publication-title">Quantum Accelerated Adjoint Method PDE-Constrained Optimization</h1>
+            <h1 class="title is-1 publication-title">Quantum Accelerated Adjoint Method For PDE-Constrained Optimization</h1>
             <div class="is-size-5 publication-authors">
               <!-- TODO: Replace with your paper authors and their personal links -->
               <span class="author-block">
@@ -536,7 +536,7 @@ u^{k+1}=u^k-\alpha_k\nabla\hat J(u^k).
     <li><strong>s</strong> – sparsity of the Jacobian matrix (maximum number of nonzero entries per row)</li>
     <li><strong>κ</strong> – denotes an upper bound on the condition number the of the state Jacobian</li>
     <li><strong>ε<sub>s</sub></strong> – tolerance used for the classical Krylov solver in the state equation</li>
-    <li><strong>ε</strong> – accuracy parameter used in the quantum routines</li>
+    <li><strong>1/ε</strong> – accuracy parameter used in the quantum routines</li>
     <li><strong>m</strong> – maximum number of additional state solves performed during the line search</li>
   </ul>
 
@@ -584,47 +584,6 @@ step-size conditions of Lemma 5.3.</p>
 
 
 
-<section class="exp-code-section">
-
-  <div class="exp-code-grid">
-
-    <!-- Experiments -->
-    <div class="exp-card">
-      <h2>Experiments</h2>
-
-      <div class="uc-banner">
-        <div class="uc-left">
-          <div class="uc-dot"></div>
-          <div>
-            <div class="uc-title">UNDER CONSTRUCTION</div>
-            <div class="uc-text">Currently working on the numerical experiments.</div>
-          </div>
-        </div>
-        <div class="uc-pill">WIP</div>
-      </div>
-
-    </div>
-
-    <!-- Code -->
-    <div class="exp-card">
-      <h2>Code</h2>
-
-      <div class="uc-banner">
-        <div class="uc-left">
-          <div class="uc-dot"></div>
-          <div>
-            <div class="uc-title">UNDER CONSTRUCTION</div>
-            <div class="uc-text">Code will be released soon.</div>
-          </div>
-        </div>
-        <div class="uc-pill">WIP</div>
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
 
 
 <!-- Image carousel -->
@@ -634,33 +593,20 @@ step-size conditions of Lemma 5.3.</p>
       <div id="results-carousel" class="carousel results-carousel">
        <div class="item">
         <!-- TODO: Replace with your research result images -->
-        <img src="static/images/carousel1.jpg" alt="First research result visualization" loading="lazy"/>
+        <img src="static/images/Figure_1.png" alt="First research result visualization" loading="lazy"/>
         <!-- TODO: Replace with description of this result -->
         <h2 class="subtitle has-text-centered">
-          First image description.
+          This plot shows the temperature distribution obtained using the hybrid quantum–classical solver for the 1D heat equation. The smooth profile reflects the expected steady-state solution with boundary constraints.
         </h2>
       </div>
       <div class="item">
         <!-- Your image here -->
-        <img src="static/images/carousel2.jpg" alt="Second research result visualization" loading="lazy"/>
+        <img src="static/images/SCALING STUDY.png" alt="Second research result visualization" loading="lazy"/>
         <h2 class="subtitle has-text-centered">
-          Second image description.
+       This plot shows the temperature distribution obtained using the hybrid quantum–classical solver for the 1D heat equation. The smooth profile reflects the expected steady-state solution with boundary constraints.
         </h2>
       </div>
-      <div class="item">
-        <!-- Your image here -->
-        <img src="static/images/carousel3.jpg" alt="Third research result visualization" loading="lazy"/>
-        <h2 class="subtitle has-text-centered">
-         Third image description.
-       </h2>
-     </div>
-     <div class="item">
-      <!-- Your image here -->
-      <img src="static/images/carousel4.jpg" alt="Fourth research result visualization" loading="lazy"/>
-      <h2 class="subtitle has-text-centered">
-        Fourth image description.
-      </h2>
-    </div>
+
   </div>
 </div>
 </div>

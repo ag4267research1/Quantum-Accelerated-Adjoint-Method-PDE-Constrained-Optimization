@@ -40,6 +40,50 @@
 <!-- End image carousel -->
 
 
+<section class="exp-code-section">
+
+  <div class="exp-code-grid">
+
+    <!-- Experiments -->
+    <div class="exp-card">
+      <h2>Experiments</h2>
+
+      <div class="uc-banner">
+        <div class="uc-left">
+          <div class="uc-dot"></div>
+          <div>
+            <div class="uc-title">UNDER CONSTRUCTION</div>
+            <div class="uc-text">Currently working on the numerical experiments.</div>
+          </div>
+        </div>
+        <div class="uc-pill">WIP</div>
+      </div>
+
+    </div>
+
+    <!-- Code -->
+    <div class="exp-card">
+      <h2>Code</h2>
+
+      <div class="uc-banner">
+        <div class="uc-left">
+          <div class="uc-dot"></div>
+          <div>
+            <div class="uc-title">UNDER CONSTRUCTION</div>
+            <div class="uc-text">Code will be released soon.</div>
+          </div>
+        </div>
+        <div class="uc-pill">WIP</div>
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+
 
 
 <!-- Youtube video -->
