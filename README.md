@@ -103,24 +103,58 @@ Install the required Python packages listed in `requirements.txt`:
 pip install -r requirements.txt
 ```
 
-### 4. Verify Installation
 
-You can verify that the environment is correctly configured by running:
+### 4. Clone the QLSA Repository
+
+This project relies on the **QLSA framework** for implementing quantum linear system algorithms such as the HHL algorithm.
+
+Clone the repository:
 
 ```bash
-python run.py configs/heat_classical.yaml
+git clone https://github.com/QCOL-LU/QLSAs.git
 ```
 
-or the hybrid quantum-classical experiment:
+### 5. Install the Repository in Editable Mode
+
+Navigate into the repository and install it in editable mode so that any modifications to the source code take effect immediately.
+
+```bash
+cd QLSAs
+pip install -e .
+```
+
+Installing in editable mode allows Python to use the **local source files directly**, which is necessary because this project modifies the HHL implementation.
+
+### 6. Replace the HHL Implementation
+
+This project includes a modified `hhl.py` file. Replace the default implementation in the QLSA repository with the version provided in this repository.
+
+Copy the file:
+
+```bash
+cp hhl.py QLSAs/src/qlsas/algorithms/hhl/hhl.py
+```
+
+Alternatively, manually replace the file located at:
+
+```
+QLSAs/src/qlsas/algorithms/hhl/hhl.py
+```
+
+with the `hhl.py` file included in this project.
+
+### 7. Verify Installation
+
+After completing the steps above, you can test the installation by running:
 
 ```bash
 python run.py configs/heat_hybrid.yaml
 ```
 
-If the installation is successful, the script will run the optimization experiment and generate the corresponding runtime plots.
+If the installation is successful, the hybrid solver will run using the modified HHL implementation.
+
 
 ### Notes
 
 - The hybrid solver relies on the **QLSA framework** for implementing the HHL algorithm.
-- Quantum circuits are executed using **Qiskit simulators** by default.
-- No access to real quantum hardware is required to run the experiments.
+- Quantum circuits are executed using **Qiskit simulators** .
