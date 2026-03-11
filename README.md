@@ -94,7 +94,7 @@ conda create -n hpdeco python=3.10
 ```bash
 conda activate hpdeco
 ```
-
+<!--- pipreqs . --force --->
 ### 3. Install Project Dependencies
 
 Install the required Python packages listed in `requirements.txt`:
