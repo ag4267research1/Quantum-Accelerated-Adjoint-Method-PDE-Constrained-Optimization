@@ -74,3 +74,53 @@ project-root
 │   └── experiments
 │       └── heat_experiment.py
 ```
+
+
+## Environment Setup
+
+This project uses Python and several scientific computing and quantum simulation libraries.  
+We recommend using a **Conda environment** to ensure all dependencies are installed correctly.
+
+### 1. Create a Conda Environment
+
+Create a new environment with Python 3.10:
+
+```bash
+conda create -n hpdeco python=3.10
+```
+
+### 2. Activate the Environment
+
+```bash
+conda activate hpdeco
+```
+
+### 3. Install Project Dependencies
+
+Install the required Python packages listed in `requirements.txt`:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Verify Installation
+
+You can verify that the environment is correctly configured by running:
+
+```bash
+python run.py configs/heat_classical.yaml
+```
+
+or the hybrid quantum-classical experiment:
+
+```bash
+python run.py configs/heat_hybrid.yaml
+```
+
+If the installation is successful, the script will run the optimization experiment and generate the corresponding runtime plots.
+
+### Notes
+
+- The hybrid solver relies on the **QLSA framework** for implementing the HHL algorithm.
+- Quantum circuits are executed using **Qiskit simulators** by default.
+- No access to real quantum hardware is required to run the experiments.
