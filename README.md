@@ -51,40 +51,26 @@ quantum acceleration in scientific computing.
 
 ## Project Structure
 <!-- tree -I "__pycache__|*.pyc" -->
+
+```
 project-root
-│
 ├── README.md
 ├── requirements.txt
 ├── run.py
-│
 ├── configs
 │   ├── heat_classical.yaml
 │   └── heat_hybrid.yaml
-│
 ├── src
-│   ├── __init__.py
-│
 │   ├── classical
-│   │   ├── __init__.py
 │   │   └── classical_solver.py
-│
 │   ├── quantum
-│   │   ├── __init__.py
 │   │   ├── qlsa_solver.py
 │   │   ├── swap_test.py
 │   │   └── spectral_gradient.py
-│
 │   ├── models
-│   │   ├── __init__.py
 │   │   └── heat_model.py
-│
 │   ├── optimization
-│   │   ├── __init__.py
 │   │   └── optimizer.py
-│
 │   └── experiments
-│       ├── __init__.py
 │       └── heat_experiment.py
-│
-└── scripts
-    └── run_experiment.py
+```
