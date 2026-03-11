@@ -989,7 +989,7 @@ a:focus {
 /* ============================= */
 /* Scale the entire carousel */
 #results-carousel {
-  transform: scale(0.6);
+  transform: scale(0.4);
   transform-origin: center;
   margin: 0 auto;
 }
