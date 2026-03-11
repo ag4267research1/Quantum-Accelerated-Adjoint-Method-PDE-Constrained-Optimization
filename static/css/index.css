@@ -978,4 +978,26 @@ a:focus {
 @media screen and (max-width: 900px){
   .exp-code-section{ padding:0 18px; }
   .exp-code-grid{ grid-template-columns: 1fr; }
+
+/* Shrink carousel size */
+.results-carousel {
+  max-width: 700px;
+  margin: auto;
+}
+
+.results-carousel .item img,
+.results-carousel .item video {
+  max-height: 300px;
+  width: auto;
+  margin: auto;
+  display: block;
+}
+
+.results-carousel .item {
+  padding: 0.75rem;
+}
+
+.results-carousel .subtitle {
+  font-size: 0.85rem !important;
+}
 }
