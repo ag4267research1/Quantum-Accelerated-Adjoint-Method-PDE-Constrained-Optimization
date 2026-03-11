@@ -984,12 +984,23 @@ a:focus {
 
 }
 
-/* ============================= */
-/* Shrink entire carousel slider */
-/* ============================= */
-/* Scale the entire carousel */
-#results-carousel {
-  transform: scale(0.4);
-  transform-origin: center;
+
+
+/* shrink the whole carousel block */
+.carousel-shell {
+  width: 65%;
   margin: 0 auto;
+}
+
+/* keep images fitting nicely inside */
+#results-carousel .item img,
+#results-carousel .item video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* optional: slightly smaller caption */
+#results-carousel .subtitle {
+  font-size: 0.9rem !important;
 }
