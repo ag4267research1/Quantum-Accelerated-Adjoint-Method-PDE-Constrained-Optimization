@@ -980,29 +980,36 @@ a:focus {
   .exp-code-grid{ grid-template-columns: 1fr; }
 
 
-/* Shrink the actual carousel slide width */
+
+
+}
+
+/* ============================= */
+/* Shrink entire carousel slider */
+/* ============================= */
+
+#results-carousel {
+  max-width: 700px;   /* controls overall carousel width */
+  margin: 0 auto;
+}
+
 #results-carousel .slider-item {
   display: flex;
   justify-content: center;
 }
 
-/* Limit width of each slide */
 #results-carousel .item {
-  max-width: 300px;
+  max-width: 600px;   /* size of the card inside the carousel */
   margin: 0 auto;
 }
 
-/* Keep image responsive */
 #results-carousel .item img {
-  width: 50%;
+  width: 80%;         /* shrink figure */
   height: auto;
 }
 
-/* Center caption */
 #results-carousel .subtitle {
-  text-align: center;
-  max-width: 300px;
+  max-width: 600px;
   margin: 1rem auto 0 auto;
-}
-
+  text-align: center;
 }
