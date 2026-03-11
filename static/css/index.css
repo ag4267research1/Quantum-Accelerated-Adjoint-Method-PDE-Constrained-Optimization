@@ -279,7 +279,7 @@ body {
 .results-carousel .item video {
   margin: 0 auto;
   border-radius: var(--border-radius);
-  width: 60%;
+  width: 100%;
   height: auto;
 }
 
@@ -1011,6 +1011,15 @@ a:focus {
   margin: 1rem auto 0 auto !important;
   text-align: center !important;
   font-size: 0.85rem !important;
+}
+
+#results-carousel .slider-item {
+  display: flex !important;
+  justify-content: center !important;
+}
+
+#results-carousel .slider-item .item {
+  width: 100%;
 }
 
 
