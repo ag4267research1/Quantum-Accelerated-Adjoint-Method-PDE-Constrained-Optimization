@@ -1,3 +1,170 @@
+########### Statevector ~ HHL version ##############
+
+# import numpy as np
+
+# from qlsas.algorithms.hhl.hhl import HHL
+# from qlsas.data_loader import StatePrep
+# from qiskit.quantum_info import Statevector
+
+
+# # ----------------------------------------------------------
+# # Global caches
+# # ----------------------------------------------------------
+
+# _HHL_CACHE = {}
+# _CIRCUIT_CACHE = {}
+
+
+# def _next_power_of_two(n):
+#     """
+#     Return smallest power of two >= n.
+#     Quantum state vectors must have size 2^m.
+#     """
+#     return 1 if n == 0 else 2 ** int(np.ceil(np.log2(n)))
+
+
+# def _pad_linear_system(A, b):
+#     """
+#     Pad Ax=b so the dimension is a power of two.
+#     """
+
+#     n = len(b)
+#     m = _next_power_of_two(n)
+
+#     if m == n:
+#         return A, b, n
+
+#     A_pad = np.eye(m, dtype=float)
+#     A_pad[:n, :n] = A
+
+#     b_pad = np.zeros(m, dtype=float)
+#     b_pad[:n] = b
+
+#     return A_pad, b_pad, n
+
+
+# def _get_hhl_instance(dim):
+#     """
+#     Return cached HHL instance for a given dimension.
+#     """
+
+#     if dim not in _HHL_CACHE:
+
+#         hhl = HHL(
+#             state_prep=StatePrep(method="default"),
+#             readout="measure_x",
+#             num_qpe_qubits=int(np.log2(dim)),
+#             eig_oracle="classical"
+#         )
+
+#         _HHL_CACHE[dim] = hhl
+
+#     return _HHL_CACHE[dim]
+
+
+# def _remove_measurements(circuit):
+#     """
+#     Remove all measurement instructions so the circuit
+#     can be simulated as a statevector.
+#     """
+
+#     cleaned = circuit.copy()
+
+#     cleaned.data = [
+#         inst for inst in cleaned.data
+#         if inst.operation.name != "measure"
+#     ]
+
+#     return cleaned
+
+
+# def _get_hhl_circuit(hhl, A, b):
+#     """
+#     Cache the HHL circuit so we don't rebuild it every
+#     iteration of the optimizer.
+#     """
+
+#     key = (A.shape[0],)
+
+#     if key not in _CIRCUIT_CACHE:
+
+#         circuit = hhl.build_circuit(A, b)
+
+#         # remove measurements for statevector simulation
+#         circuit = _remove_measurements(circuit)
+
+#         _CIRCUIT_CACHE[key] = circuit
+
+#     return _CIRCUIT_CACHE[key]
+
+
+# def adjoint_solver(A, rhs, **kwargs):
+#     """
+#     Solve the adjoint system
+
+#         A^T p = rhs
+
+#     Returns the quantum statevector |p> suitable for
+#     use in a swap test.
+#     """
+
+#     # --------------------------------------------------
+#     # Form adjoint system
+#     # --------------------------------------------------
+
+#     AT = A.T
+
+#     # --------------------------------------------------
+#     # Normalize RHS
+#     # --------------------------------------------------
+
+#     rhs_norm = np.linalg.norm(rhs)
+
+#     if rhs_norm == 0.0:
+#         return np.zeros_like(rhs)
+
+#     b = rhs / rhs_norm
+
+#     # --------------------------------------------------
+#     # Pad system
+#     # --------------------------------------------------
+
+#     AT_pad, b_pad, original_dim = _pad_linear_system(AT, b)
+
+#     dim = len(b_pad)
+
+#     # --------------------------------------------------
+#     # Reuse HHL instance
+#     # --------------------------------------------------
+
+#     hhl = _get_hhl_instance(dim)
+
+#     # --------------------------------------------------
+#     # Reuse cached circuit
+#     # --------------------------------------------------
+
+#     circuit = _get_hhl_circuit(hhl, AT_pad, b_pad)
+
+#     # --------------------------------------------------
+#     # Simulate quantum state
+#     # --------------------------------------------------
+
+#     state = Statevector.from_instruction(circuit)
+
+#     vec = state.data
+
+#     # Extract solution amplitudes
+#     p_state = vec[:dim]
+
+#     # Remove padding
+#     p_state = p_state[:original_dim]
+
+#     # Undo normalization
+#     p_state = p_state * rhs_norm
+
+#     return p_state
+
+
 import numpy as np
 
 from qlsas.algorithms.hhl.hhl import HHL
@@ -6,51 +173,21 @@ from qlsas.solver import QuantumLinearSolver
 from qiskit_aer import AerSimulator
 
 
+# ----------------------------------------------------------
+# Global caches
+# ----------------------------------------------------------
+
+_HHL_CACHE = {}
+_SOLVER_CACHE = {}
+
+
 def _next_power_of_two(n):
-    """
-    Return the next power of two greater than or equal to n.
-
-    Parameters
-    ----------
-    n : int
-        Input dimension.
-
-    Returns
-    -------
-    int
-        Smallest power of two >= n.
-    """
-
+    """Return smallest power of two >= n."""
     return 1 if n == 0 else 2 ** int(np.ceil(np.log2(n)))
 
 
 def _pad_linear_system(A, b):
-    """
-    Pad a linear system Ax = b so that its dimension is a power of two.
-
-    The QLSAs implementation requires state vectors to have length 2^m.
-    If the input system dimension is not a power of two, this function
-    embeds the system into a larger padded system.
-
-    Parameters
-    ----------
-    A : ndarray
-        Square matrix of shape (n, n).
-
-    b : ndarray
-        Right-hand side vector of length n.
-
-    Returns
-    -------
-    A_pad : ndarray
-        Padded matrix of shape (m, m), where m is a power of two.
-
-    b_pad : ndarray
-        Padded vector of length m.
-
-    original_dim : int
-        Original system dimension n.
-    """
+    """Pad Ax=b so the dimension becomes a power of two."""
 
     n = len(b)
     m = _next_power_of_two(n)
@@ -67,90 +204,91 @@ def _pad_linear_system(A, b):
     return A_pad, b_pad, n
 
 
-def adjoint_solver(A, rhs, shots=1000, **kwargs):
+def _get_solver(dim, shots):
     """
-    Solve the adjoint system using a quantum linear system algorithm.
+    Cache the solver so we don't rebuild/transpile HHL
+    every optimizer iteration.
+    """
+
+    key = (dim, shots)
+
+    if key not in _SOLVER_CACHE:
+
+        hhl = HHL(
+            state_prep=StatePrep(method="default"),
+            readout="measure_x",
+            num_qpe_qubits=int(np.log2(dim)),
+            eig_oracle="classical"
+        )
+
+        backend = AerSimulator()
+
+        solver = QuantumLinearSolver(
+            qlsa=hhl,
+            backend=backend,
+            shots=shots,
+            optimization_level=0
+        )
+
+        _SOLVER_CACHE[key] = solver
+
+    return _SOLVER_CACHE[key]
+
+
+def adjoint_solver(A, rhs, shots=1024, **kwargs):
+    """
+    Solve the adjoint system
 
         A^T p = rhs
-
-    The QLSAs package expects the state dimension to be a power of two,
-    so the system is padded automatically when needed.
-
-    Parameters
-    ----------
-    A : ndarray
-        Jacobian matrix ∂c/∂u.
-
-    rhs : ndarray
-        Right-hand side vector ∂J/∂u.
-
-    shots : int
-        Number of successful measurement shots requested from the solver.
-
-    Returns
-    -------
-    p : ndarray
-        Classical approximation of the adjoint vector, truncated back
-        to the original dimension.
     """
 
-    # ---------------------------------------------
-    # Form the adjoint system A^T p = rhs
-    # ---------------------------------------------
+    # --------------------------------------------------
+    # Form adjoint system
+    # --------------------------------------------------
+
     AT = A.T
 
-    # ---------------------------------------------
-    # Normalize the right-hand side
-    # ---------------------------------------------
+    # --------------------------------------------------
+    # Normalize RHS
+    # --------------------------------------------------
+
     rhs_norm = np.linalg.norm(rhs)
 
-    if rhs_norm == 0.0:
+    if rhs_norm == 0:
         return np.zeros_like(rhs)
 
     b = rhs / rhs_norm
 
-    # ---------------------------------------------
-    # Pad system to power-of-two dimension
-    # ---------------------------------------------
+    # --------------------------------------------------
+    # Pad system
+    # --------------------------------------------------
+
     AT_pad, b_pad, original_dim = _pad_linear_system(AT, b)
 
-    # ---------------------------------------------
-    # Build HHL object
-    # ---------------------------------------------
-    hhl = HHL(
-        state_prep=StatePrep(method="default"),
-        readout="measure_x",
-        num_qpe_qubits=int(np.log2(len(b_pad))),
-        eig_oracle="classical"
-    )
+    dim = len(b_pad)
 
-    # ---------------------------------------------
-    # Use local simulator backend
-    # ---------------------------------------------
-    backend = AerSimulator()
+    # --------------------------------------------------
+    # Get cached solver
+    # --------------------------------------------------
 
-    solver = QuantumLinearSolver(
-        qlsa=hhl,
-        backend=backend,
-        target_successful_shots=shots,
-        shots_per_batch=shots,
-        optimization_level=3
-    )
+    solver = _get_solver(dim, shots)
 
-    # ---------------------------------------------
-    # Solve padded system
-    # ---------------------------------------------
+    # --------------------------------------------------
+    # Solve using HHL framework
+    # --------------------------------------------------
+
     solution = solver.solve(AT_pad, b_pad)
 
-    # ---------------------------------------------
-    # Extract quantum state |p>
-    # ---------------------------------------------
-    if isinstance(solution, dict):
-        p_state = solution["solution"]
-    else:
-        p_state = solution
+    # --------------------------------------------------
+    # Remove padding
+    # --------------------------------------------------
 
-    # ---------------------------------------------
-    # Return quantum state and scaling factor
-    # ---------------------------------------------
-    return p_state, rhs_norm
+    p = solution[:original_dim]
+
+    # --------------------------------------------------
+    # Undo RHS normalization
+    # --------------------------------------------------
+
+    p = p * rhs_norm
+
+    return p

@@ -3,7 +3,7 @@ model:
   nx: 5
 
 optimizer:
-  max_iter: 10
+  max_iter: 1
 
 solver:
   mode: hybrid

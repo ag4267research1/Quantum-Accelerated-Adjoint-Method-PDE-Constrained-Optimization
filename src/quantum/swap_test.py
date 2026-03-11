@@ -35,7 +35,8 @@ def inner_product(left, right, shots=1024, **kwargs):
     p_pad = np.zeros(size)
     w_pad = np.zeros(size)
 
-    p_pad[:len(p_vec)] = np.real(p_vec)
+    # p_pad[:len(p_vec)] = np.real(p_vec)
+    p_pad[:len(p_vec)] = p_vec
     w_pad[:len(w_vec)] = w_vec
 
     # --------------------------------------------------
@@ -57,8 +58,15 @@ def inner_product(left, right, shots=1024, **kwargs):
 
     qc = QuantumCircuit(1 + 2 * n, 1)
 
-    qc.initialize(p_pad, range(1, n + 1))
-    qc.initialize(w_pad, range(n + 1, 2 * n + 1))
+    # qc.initialize(p_pad, range(1, n + 1))
+    # qc.initialize(w_pad, range(n + 1, 2 * n + 1))
+    
+    if isinstance(left, Statevector):
+        p_vec = left.data
+    elif isinstance(left, np.ndarray):
+        p_vec = left
+    else:
+        raise ValueError("left must be a statevector or vector")
 
     qc.h(0)
 
