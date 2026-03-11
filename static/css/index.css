@@ -277,7 +277,7 @@ body {
 
 .results-carousel .item img,
 .results-carousel video {
-  margin: 0;
+  margin: 0 auto;
   border-radius: var(--border-radius);
   width: 60%;
   height: auto;
@@ -980,51 +980,38 @@ a:focus {
   .exp-code-grid{ grid-template-columns: 1fr; }
 
 
+/* ===== Carousel size + centering fix ===== */
+#results-carousel {
+  max-width: 900px;
+  margin: 0 auto;
+}
 
-/* Shrink carousel size */
-.results-carousel {
+#results-carousel .item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 0.75rem !important;
+}
+
+#results-carousel .item img,
+#results-carousel .item video {
+  display: block !important;
+  margin: 0 auto !important;
+  max-width: 65% !important;
+  max-height: 300px !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+#results-carousel .subtitle {
   max-width: 700px;
-  margin: auto;
-}
-
-.results-carousel .item img,
-.results-carousel .item video {
-  max-height: 300px;
-  width: auto;
-  margin: auto;
-  display: block;
-}
-
-.results-carousel .item {
-  padding: 0.75rem;
-}
-
-.results-carousel .subtitle {
+  margin: 1rem auto 0 auto !important;
+  text-align: center !important;
   font-size: 0.85rem !important;
 }
 
-
-
-
-/* Fix carousel centering */
-.results-carousel .item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Control image size and keep centered */
-.results-carousel .item img,
-.results-carousel .item video {
-  max-width: 60%;
-  height: auto;
-}
-
-/* Keep caption centered under image */
-.results-carousel .subtitle {
-  text-align: center;
-  max-width: 600px;
-}
 
 }
