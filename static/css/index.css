@@ -980,18 +980,29 @@ a:focus {
   .exp-code-grid{ grid-template-columns: 1fr; }
 
 
-/* Fix bulma-carousel alignment */
+/* Shrink the actual carousel slide width */
 #results-carousel .slider-item {
   display: flex;
   justify-content: center;
 }
 
-/* Control figure size */
-#results-carousel img {
-  width: 60%;
+/* Limit width of each slide */
+#results-carousel .item {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Keep image responsive */
+#results-carousel .item img {
+  width: 100%;
   height: auto;
-  margin: auto;
-  display: block;
+}
+
+/* Center caption */
+#results-carousel .subtitle {
+  text-align: center;
+  max-width: 600px;
+  margin: 1rem auto 0 auto;
 }
 
 }
