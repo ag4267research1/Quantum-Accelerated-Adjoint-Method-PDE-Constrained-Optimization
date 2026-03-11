@@ -1006,26 +1006,25 @@ a:focus {
 
 
 
-/* Center carousel content */
+/* Fix carousel centering */
 .results-carousel .item {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Center and control image size */
+/* Control image size and keep centered */
 .results-carousel .item img,
 .results-carousel .item video {
-  max-height: 300px;
-  max-width: 70%;
+  max-width: 60%;
   height: auto;
-  width: auto;
-  margin: 0 auto;
-  display: block;
 }
 
-/* Keep caption centered and narrower */
+/* Keep caption centered under image */
 .results-carousel .subtitle {
+  text-align: center;
   max-width: 600px;
-  margin: 1rem auto 0 auto;
 }
 
 }
