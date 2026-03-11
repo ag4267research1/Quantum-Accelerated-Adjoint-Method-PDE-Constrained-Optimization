@@ -259,9 +259,9 @@ body {
 }
 
 .results-carousel .item {
-  margin: 1rem;
+  margin: 0.6rem;
   overflow: hidden;
-  padding: 1.5rem;
+  padding: 0.9rem;
   font-size: 0;
   background: var(--background-primary);
   border-radius: var(--border-radius-lg);
@@ -279,7 +279,7 @@ body {
 .results-carousel video {
   margin: 0;
   border-radius: var(--border-radius);
-  width: 100%;
+  width: 60%;
   height: auto;
 }
 
