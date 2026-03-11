@@ -989,7 +989,7 @@ a:focus {
 /* ============================= */
 
 #results-carousel {
-  max-width: 700px;   /* controls overall carousel width */
+  max-width: 350px;   /* controls overall carousel width */
   margin: 0 auto;
 }
 
@@ -999,17 +999,17 @@ a:focus {
 }
 
 #results-carousel .item {
-  max-width: 600px;   /* size of the card inside the carousel */
+  max-width: 300px;   /* size of the card inside the carousel */
   margin: 0 auto;
 }
 
 #results-carousel .item img {
-  width: 80%;         /* shrink figure */
+  width: 60%;         /* shrink figure */
   height: auto;
 }
 
 #results-carousel .subtitle {
-  max-width: 600px;
+  max-width: 300px;
   margin: 1rem auto 0 auto;
   text-align: center;
 }
