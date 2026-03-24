@@ -34,7 +34,7 @@ def run_experiment(config):
 
     for n in sizes:
 
-        print(f"\n Number of state variables: {n}")
+        print(f"\n Number of state variables: {n} ")
 
         # --------------------------------------------
         # Update config for this size
@@ -50,7 +50,7 @@ def run_experiment(config):
         last_model = model
 
         # initial control
-        u0 = np.zeros(model.num_dofs)
+        u0 = np.ones(model.num_dofs)
 
         # --------------------------------------------
         # Build system once (for condition number)

@@ -1,5 +1,5 @@
 experiment: elliptic
-experiment_type: exp5
+experiment_type: exp1
 
 solver: hybrid          
 
