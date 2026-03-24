@@ -1,3 +1,5 @@
+experiment: heat
+
 model:
   n: 100
   nx: 5

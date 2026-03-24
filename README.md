@@ -56,23 +56,33 @@ quantum acceleration in scientific computing.
 project-root
 ├── README.md
 ├── requirements.txt
+├── LICENSE
+├── hhl.py
+├── post_processor.py
 ├── run.py
 ├── configs
+│   ├── elliptic_classical.yaml
+│   ├── elliptic_hybrid.yaml
 │   ├── heat_classical.yaml
 │   └── heat_hybrid.yaml
-├── src
-│   ├── classical
-│   │   └── classical_solver.py
-│   ├── quantum
-│   │   ├── qlsa_solver.py
-│   │   ├── swap_test.py
-│   │   └── spectral_gradient.py
-│   ├── models
-│   │   └── heat_model.py
-│   ├── optimization
-│   │   └── optimizer.py
-│   └── experiments
-│       └── heat_experiment.py
+├── old_runfiles
+│   ├── run.py
+│   └── run2.py
+└── src
+    ├── classical
+    │   └── classical_solver.py
+    ├── quantum
+    │   ├── qlsa_solver.py
+    │   ├── swap_test.py
+    │   └── spectral_gradient.py
+    ├── models
+    │   ├── elliptic_model.py
+    │   └── heat_model.py
+    ├── optimization
+    │   └── optimizer.py
+    └── experiments
+        ├── elliptic_experiment.py
+        └── heat_experiment.py
 ```
 
 
