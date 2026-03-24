@@ -1,0 +1,12 @@
+experiment: elliptic
+experiment_type: exp1
+
+solver: hybrid          
+
+grid_size: 16
+sizes: [8, 12, 16, 20]
+
+alpha: 1e-4
+max_iter: 10
+step_size: 0.01
+method: gradient_descent

@@ -177,7 +177,7 @@ from qiskit_aer import AerSimulator
 # Global caches
 # ----------------------------------------------------------
 
-_HHL_CACHE = {}
+# _HHL_CACHE = {}
 _SOLVER_CACHE = {}
 
 
@@ -289,6 +289,6 @@ def adjoint_solver(A, rhs, shots=1024, **kwargs):
     # Undo RHS normalization
     # --------------------------------------------------
 
-    p = p * rhs_norm
+    # p = p * rhs_norm
 
     return p
