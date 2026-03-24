@@ -1,5 +1,5 @@
 experiment: elliptic
-experiment_type: exp3   # choose experiment
+experiment_type: exp3  
 
 solver: classical       
 
@@ -9,4 +9,3 @@ sizes: [2, 4, 16, 20]
 alpha: 1e-4
 max_iter: 10
 step_size: 0.01
-method: gradient_descent

@@ -34,7 +34,7 @@ def run_experiment(config):
 
     for n in sizes:
 
-        print(f"\nRunning grid size: {n} x {n}")
+        print(f"\n Number of state variables: {n}")
 
         # --------------------------------------------
         # Update config for this size
