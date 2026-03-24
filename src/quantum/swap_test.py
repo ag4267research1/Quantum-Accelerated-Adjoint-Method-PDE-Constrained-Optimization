@@ -17,9 +17,9 @@ def inner_product(left, right, shots=1024, **kwargs):
     if isinstance(left, Statevector):
         p_vec = left.data
     else:
-        p_vec = np.asarray(left, dtype=float)
+        p_vec = np.asarray(left, dtype=complex)
 
-    w_vec = np.asarray(right, dtype=float)
+    w_vec = np.asarray(right, dtype=complex)
 
     # --------------------------------------------------
     # Determine number of qubits
@@ -32,10 +32,10 @@ def inner_product(left, right, shots=1024, **kwargs):
     # Pad vectors
     # --------------------------------------------------
 
-    p_pad = np.zeros(size)
-    w_pad = np.zeros(size)
+    p_pad = np.zeros(size, dtype=complex)
+    w_pad = np.zeros(size, dtype=complex)
 
-    # p_pad[:len(p_vec)] = np.real(p_vec)
+   
     p_pad[:len(p_vec)] = p_vec
     w_pad[:len(w_vec)] = w_vec
 
@@ -46,11 +46,11 @@ def inner_product(left, right, shots=1024, **kwargs):
     p_norm = np.linalg.norm(p_pad)
     w_norm = np.linalg.norm(w_pad)
 
-    if p_norm > 0:
-        p_pad = p_pad / p_norm
+    if p_norm == 0 or w_norm == 0:
+        return 0.0
 
-    if w_norm > 0:
-        w_pad = w_pad / w_norm
+    p_pad = p_pad / p_norm
+    w_pad = w_pad / w_norm
 
     # --------------------------------------------------
     # Build swap test circuit
@@ -58,16 +58,9 @@ def inner_product(left, right, shots=1024, **kwargs):
 
     qc = QuantumCircuit(1 + 2 * n, 1)
 
-    # qc.initialize(p_pad, range(1, n + 1))
-    # qc.initialize(w_pad, range(n + 1, 2 * n + 1))
+    qc.initialize(p_pad, range(1, n + 1))
+    qc.initialize(w_pad, range(n + 1, 2 * n + 1))
     
-    if isinstance(left, Statevector):
-        p_vec = left.data
-    elif isinstance(left, np.ndarray):
-        p_vec = left
-    else:
-        raise ValueError("left must be a statevector or vector")
-
     qc.h(0)
 
     for i in range(n):
