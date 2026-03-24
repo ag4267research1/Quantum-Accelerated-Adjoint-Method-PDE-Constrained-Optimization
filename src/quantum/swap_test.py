@@ -1,104 +1,105 @@
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import Statevector
-from qiskit_aer import AerSimulator
 
 
-def inner_product(left, right, shots=1024, **kwargs):
+def inner_product(left, right, **kwargs):
     """
-    Swap test between prepared quantum state |p>
-    and classical vector w_i.
+    Estimate the overlap |<left|right>| using an exact statevector
+    simulation of the swap test.
+
+    Parameters
+    ----------
+    left : Statevector or np.ndarray
+        First state/vector.
+
+    right : np.ndarray
+        Second vector/state.
+
+    Returns
+    -------
+    float
+        Exact overlap magnitude |<left|right>|.
     """
 
     # --------------------------------------------------
-    # Extract vector from quantum state if necessary
+    # Convert inputs to complex vectors
     # --------------------------------------------------
 
     if isinstance(left, Statevector):
-        p_vec = left.data
+        left_vec = left.data
     else:
-        p_vec = np.asarray(left, dtype=complex)
+        left_vec = np.asarray(left, dtype=complex)
 
-    w_vec = np.asarray(right, dtype=complex)
+    right_vec = np.asarray(right, dtype=complex)
 
     # --------------------------------------------------
     # Determine number of qubits
     # --------------------------------------------------
 
-    n = int(np.ceil(np.log2(max(len(p_vec), len(w_vec)))))
-    size = 2 ** n
+    max_len = max(len(left_vec), len(right_vec))
+    n_qubits = int(np.ceil(np.log2(max_len)))
+    state_dim = 2 ** n_qubits
 
     # --------------------------------------------------
-    # Pad vectors
+    # Pad vectors to power-of-two size
     # --------------------------------------------------
 
-    p_pad = np.zeros(size, dtype=complex)
-    w_pad = np.zeros(size, dtype=complex)
+    left_pad = np.zeros(state_dim, dtype=complex)
+    right_pad = np.zeros(state_dim, dtype=complex)
 
-    # p_pad[:len(p_vec)] = np.real(p_vec)
-    p_pad[:len(p_vec)] = p_vec
-    w_pad[:len(w_vec)] = w_vec
+    left_pad[:len(left_vec)] = left_vec
+    right_pad[:len(right_vec)] = right_vec
 
     # --------------------------------------------------
-    # Normalize
+    # Normalize states
     # --------------------------------------------------
 
-    p_norm = np.linalg.norm(p_pad)
-    w_norm = np.linalg.norm(w_pad)
+    left_norm = np.linalg.norm(left_pad)
+    right_norm = np.linalg.norm(right_pad)
 
-    # if p_norm > 0:
-    #     p_pad = p_pad / p_norm
-
-    # if w_norm > 0:
-    #     w_pad = w_pad / w_norm
-    
-    if p_norm == 0 or w_norm == 0:
+    if left_norm == 0 or right_norm == 0:
         return 0.0
 
-    p_pad = p_pad / p_norm
-    w_pad = w_pad / w_norm
+    left_pad /= left_norm
+    right_pad /= right_norm
 
     # --------------------------------------------------
-    # Build swap test circuit
+    # Build swap test circuit (no measurement)
     # --------------------------------------------------
 
-    qc = QuantumCircuit(1 + 2 * n, 1)
+    qc = QuantumCircuit(1 + 2 * n_qubits)
 
-    qc.initialize(p_pad, range(1, n + 1))
-    qc.initialize(w_pad, range(n + 1, 2 * n + 1))
-    
-    # if isinstance(left, Statevector):
-    #     p_vec = left.data
-    # elif isinstance(left, np.ndarray):
-    #     p_vec = left
-    # else:
-    #     raise ValueError("left must be a statevector or vector")
+    qc.initialize(left_pad, range(1, n_qubits + 1))
+    qc.initialize(right_pad, range(n_qubits + 1, 2 * n_qubits + 1))
 
     qc.h(0)
-
-    for i in range(n):
-        qc.cswap(0, 1 + i, 1 + n + i)
-
+    for i in range(n_qubits):
+        qc.cswap(0, 1 + i, 1 + n_qubits + i)
     qc.h(0)
 
-    qc.measure(0, 0)
-
     # --------------------------------------------------
-    # Execute
+    # Exact statevector simulation
     # --------------------------------------------------
 
-    backend = AerSimulator()
+    final_state = Statevector.from_instruction(qc)
 
-    result = backend.run(qc, shots=shots).result()
+    # --------------------------------------------------
+    # Compute P(ancilla = 0)
+    # --------------------------------------------------
+    #
+    # Qiskit basis ordering is little-endian, so qubit 0 is the
+    # least-significant bit in the basis index. That means ancilla=0
+    # corresponds to even indices, and ancilla=1 to odd indices.
+    # --------------------------------------------------
 
-    counts = result.get_counts()
-
-    p0 = counts.get("0", 0) / shots
+    probs = np.abs(final_state.data) ** 2
+    p0 = probs[::2].sum()
 
     # --------------------------------------------------
     # Recover overlap
     # --------------------------------------------------
 
-    overlap = np.sqrt(max(0.0, 2 * p0 - 1))
+    overlap = np.sqrt(max(0.0, 2.0 * p0 - 1.0))
 
     return overlap
