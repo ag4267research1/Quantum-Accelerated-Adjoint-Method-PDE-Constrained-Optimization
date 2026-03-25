@@ -1,0 +1,368 @@
+
+[INFO] Running experiment: heat
+Running solution experiment...
+>>> Job ID: d71ki3pamkec73a01um0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 45
+success rate: 0.703125
+solver residual: 0.4494159253541257
+iter=0000 | J=6.872641e+02 | ||grad||=7.923425e+00
+Running scaling experiment...
+>>> Job ID: d71ki6pamkec73a01uq0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 51
+success rate: 0.796875
+solver residual: 0.00998574603199023
+iter=0000 | J=1.429236e+02 | ||grad||=2.429504e+00
+>>> Job ID: d71ki99amkec73a01uvg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 49
+success rate: 0.765625
+solver residual: 0.010421860239361674
+iter=0001 | J=1.427458e+02 | ||grad||=2.432510e+00
+>>> Job ID: d71kic6v3u3c73eheck0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 51
+success rate: 0.796875
+solver residual: 0.010040331029263163
+iter=0002 | J=1.425677e+02 | ||grad||=2.434084e+00
+>>> Job ID: d71kieuv3u3c73ehecmg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 47
+success rate: 0.734375
+solver residual: 0.010828109584438837
+iter=0003 | J=1.423895e+02 | ||grad||=2.427169e+00
+>>> Job ID: d71kijmv3u3c73ehecr0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 49
+success rate: 0.765625
+solver residual: 0.031230959686135255
+iter=0004 | J=1.422121e+02 | ||grad||=2.426399e+00
+>>> Job ID: d71kimev3u3c73ehecug
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 44
+success rate: 0.6875
+solver residual: 0.09319501488747987
+iter=0005 | J=1.420347e+02 | ||grad||=2.446989e+00
+>>> Job ID: d71kip4scmvs73aaoopg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 46
+success rate: 0.71875
+solver residual: 0.02209538791150504
+iter=0006 | J=1.418554e+02 | ||grad||=2.424504e+00
+>>> Job ID: d71kirsscmvs73aaoot0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 51
+success rate: 0.796875
+solver residual: 0.029918194835428184
+iter=0007 | J=1.416783e+02 | ||grad||=2.422940e+00
+>>> Job ID: d71kiukscmvs73aaop20
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 49
+success rate: 0.765625
+solver residual: 0.05240335564069981
+iter=0008 | J=1.415014e+02 | ||grad||=2.414457e+00
+>>> Job ID: d71kj1eqdfbc73d0vq40
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 49
+success rate: 0.765625
+solver residual: 0.03151786979526363
+iter=0009 | J=1.413254e+02 | ||grad||=2.414051e+00
+>>> Job ID: d71kj46v3u3c73ehedh0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 53
+success rate: 0.828125
+solver residual: 0.02870198854035215
+iter=0010 | J=1.411495e+02 | ||grad||=2.426722e+00
+>>> Job ID: d71kj74scmvs73aaopd0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 48
+success rate: 0.75
+solver residual: 0.08520071610641572
+iter=0011 | J=1.409723e+02 | ||grad||=2.434201e+00
+>>> Job ID: d71kjcmqdfbc73d0vqk0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 55
+success rate: 0.859375
+solver residual: 0.046212996439023636
+iter=0012 | J=1.407945e+02 | ||grad||=2.421697e+00
+>>> Job ID: d71kjf9amkec73a020g0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 45
+success rate: 0.703125
+solver residual: 0.22046269245445807
+iter=0013 | J=1.406179e+02 | ||grad||=2.472813e+00
+>>> Job ID: d71kji6qdfbc73d0vqr0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 44
+success rate: 0.6875
+solver residual: 0.14103330681576637
+iter=0014 | J=1.404371e+02 | ||grad||=2.403796e+00
+>>> Job ID: d71kjksscmvs73aaopsg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 49
+success rate: 0.765625
+solver residual: 0.051837584084217105
+iter=0015 | J=1.402627e+02 | ||grad||=2.421960e+00
+>>> Job ID: d71kjpmv3u3c73eheea0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 50
+success rate: 0.78125
+solver residual: 0.04051025487913378
+iter=0016 | J=1.400862e+02 | ||grad||=2.413983e+00
+>>> Job ID: d71kjseqdfbc73d0vr6g
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 42
+success rate: 0.65625
+solver residual: 0.4625475575604995
+iter=0000 | J=6.872641e+02 | ||grad||=7.933973e+00
+>>> Job ID: d71kjv4scmvs73aaoq80
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 40
+success rate: 0.625
+solver residual: 0.38677062140392954
+iter=0001 | J=6.858156e+02 | ||grad||=7.963379e+00
+>>> Job ID: d71kk1uqdfbc73d0vrd0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 40
+success rate: 0.625
+solver residual: 0.4005067906684518
+iter=0002 | J=6.843630e+02 | ||grad||=7.924613e+00
+>>> Job ID: d71kk4mv3u3c73eheer0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 50
+success rate: 0.78125
+solver residual: 0.46484069489226787
+iter=0003 | J=6.829186e+02 | ||grad||=7.897835e+00
+>>> Job ID: d71kk79amkec73a021ag
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 48
+success rate: 0.75
+solver residual: 0.46557527054293624
+iter=0004 | J=6.814804e+02 | ||grad||=7.863639e+00
+>>> Job ID: d71kka6qdfbc73d0vrm0
+>>> Job Status: DONE     
+total shots: 64
+num_successful_shots: 41
+success rate: 0.640625
+solver residual: 0.48004061482215266
+iter=0005 | J=6.800498e+02 | ||grad||=7.940768e+00
+>>> Job ID: d71kkbkscmvs73aaoqlg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 46
+success rate: 0.71875
+solver residual: 0.6544147718259736
+iter=0006 | J=6.786057e+02 | ||grad||=7.834894e+00
+>>> Job ID: d71kkecscmvs73aaoqog
+>>> Job Status: DONE     
+total shots: 64
+num_successful_shots: 44
+success rate: 0.6875
+solver residual: 0.446096313413588
+iter=0007 | J=6.771827e+02 | ||grad||=7.851097e+00
+>>> Job ID: d71kkfsscmvs73aaoqpg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 46
+success rate: 0.71875
+solver residual: 0.42672898506983786
+iter=0008 | J=6.757578e+02 | ||grad||=7.874413e+00
+>>> Job ID: d71kkikscmvs73aaoqt0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 41
+success rate: 0.640625
+solver residual: 0.4496064454168277
+iter=0009 | J=6.743297e+02 | ||grad||=7.869612e+00
+>>> Job ID: d71kklcscmvs73aaor10
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 43
+success rate: 0.671875
+solver residual: 0.37505172152179517
+iter=0010 | J=6.729037e+02 | ||grad||=7.814004e+00
+>>> Job ID: d71kko6qdfbc73d0vs40
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 48
+success rate: 0.75
+solver residual: 0.4875006661197294
+iter=0011 | J=6.714895e+02 | ||grad||=7.840089e+00
+>>> Job ID: d71kkquqdfbc73d0vs70
+>>> Job Status: DONE     
+total shots: 64
+num_successful_shots: 46
+success rate: 0.71875
+solver residual: 0.27899551646150433
+iter=0012 | J=6.700710e+02 | ||grad||=7.899126e+00
+>>> Job ID: d71kks9amkec73a0220g
+>>> Job Status: DONE     
+total shots: 64
+num_successful_shots: 50
+success rate: 0.78125
+solver residual: 0.47202344110818817
+iter=0013 | J=6.686431e+02 | ||grad||=7.851384e+00
+>>> Job ID: d71kku1amkec73a02220
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 43
+success rate: 0.671875
+solver residual: 0.27516881123038023
+iter=0014 | J=6.672250e+02 | ||grad||=7.865145e+00
+>>> Job ID: d71kl0uv3u3c73ehefpg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 39
+success rate: 0.609375
+solver residual: 0.3815919529387847
+iter=0015 | J=6.658058e+02 | ||grad||=7.873345e+00
+>>> Job ID: d71kl3sscmvs73aaori0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 47
+success rate: 0.734375
+solver residual: 0.3667156157986325
+iter=0016 | J=6.643859e+02 | ||grad||=7.964319e+00
+>>> Job ID: d71kl6kscmvs73aaorlg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 33
+success rate: 0.515625
+solver residual: 0.650031915124763
+iter=0000 | J=1.348820e+03 | ||grad||=1.766124e+01
+>>> Job ID: d71kl9ev3u3c73eheg20
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 38
+success rate: 0.59375
+solver residual: 0.8146058576171898
+iter=0001 | J=1.342172e+03 | ||grad||=1.772613e+01
+>>> Job ID: d71klc6qdfbc73d0vsq0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 43
+success rate: 0.671875
+solver residual: 0.6557927933916333
+iter=0002 | J=1.335508e+03 | ||grad||=1.761443e+01
+>>> Job ID: d71kleuqdfbc73d0vst0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 37
+success rate: 0.578125
+solver residual: 0.6087555721651511
+iter=0003 | J=1.328896e+03 | ||grad||=1.756637e+01
+>>> Job ID: d71klhmqdfbc73d0vt00
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 35
+success rate: 0.546875
+solver residual: 0.6921317437389569
+iter=0004 | J=1.322312e+03 | ||grad||=1.753307e+01
+>>> Job ID: d71klkcscmvs73aaos30
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 29
+success rate: 0.453125
+solver residual: 0.720536020225005
+iter=0005 | J=1.315749e+03 | ||grad||=1.767185e+01
+>>> Job ID: d71kln6qdfbc73d0vt60
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 36
+success rate: 0.5625
+solver residual: 0.7145567995419355
+iter=0006 | J=1.309143e+03 | ||grad||=1.749675e+01
+>>> Job ID: d71klpsscmvs73aaos90
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 24
+success rate: 0.375
+solver residual: 0.7868681627725518
+iter=0007 | J=1.302612e+03 | ||grad||=1.746273e+01
+>>> Job ID: d71klskscmvs73aaosbg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 34
+success rate: 0.53125
+solver residual: 0.8203945185597273
+iter=0008 | J=1.296102e+03 | ||grad||=1.754582e+01
+>>> Job ID: d71klvcscmvs73aaoseg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 37
+success rate: 0.578125
+solver residual: 0.7241250477310439
+iter=0009 | J=1.289570e+03 | ||grad||=1.747253e+01
+>>> Job ID: d71km26qdfbc73d0vtgg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 36
+success rate: 0.5625
+solver residual: 0.6835116649430559
+iter=0010 | J=1.283075e+03 | ||grad||=1.731765e+01
+>>> Job ID: d71km54scmvs73aaosk0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 36
+success rate: 0.5625
+solver residual: 0.7046047793797908
+iter=0011 | J=1.276646e+03 | ||grad||=1.735869e+01
+>>> Job ID: d71km7uqdfbc73d0vtn0
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 26
+success rate: 0.40625
+solver residual: 0.6016914232304404
+iter=0012 | J=1.270211e+03 | ||grad||=1.732262e+01
+>>> Job ID: d71kmamqdfbc73d0vtpg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 28
+success rate: 0.4375
+solver residual: 0.5971059398966894
+iter=0013 | J=1.263798e+03 | ||grad||=1.727716e+01
+>>> Job ID: d71kmdcscmvs73aaosug
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 30
+success rate: 0.46875
+solver residual: 0.7389931816643467
+iter=0014 | J=1.257411e+03 | ||grad||=1.727476e+01
+>>> Job ID: d71kmg6qdfbc73d0vtvg
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 34
+success rate: 0.53125
+solver residual: 0.5906389764875281
+iter=0015 | J=1.251033e+03 | ||grad||=1.724407e+01
+>>> Job ID: d71kmiuqdfbc73d0vu4g
+>>> Job Status: DONE      
+total shots: 64
+num_successful_shots: 32
+success rate: 0.5
+solver residual: 0.8418025793518537
+iter=0016 | J=1.244675e+03 | ||grad||=1.729061e+01

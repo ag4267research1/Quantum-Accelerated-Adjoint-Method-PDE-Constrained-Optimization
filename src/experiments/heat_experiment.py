@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import os
 
 from src.models.heat_model import HeatModel
 from src.optimization.optimizer import Optimizer
@@ -130,12 +131,17 @@ def plot_solution(config):
 
     grid = model.grid
 
+    save_dir = config.get("output", {}).get("save_dir", "plots")
+    os.makedirs(save_dir, exist_ok=True)
+
     plt.figure()
     plt.plot(grid, u)
     plt.xlabel("y")
     plt.ylabel("Temperature (state u)")
     plt.title(f"Heat Equation Solution ({mode})")
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, f"heat_solution_{mode}.png"), dpi=300)
+    plt.close()
 
 
 # ------------------------------------------------------------
@@ -177,19 +183,22 @@ def scaling_experiment(config):
         )
 
         start = time.time()
-
         optimizer.optimize(x0, max_iter=iterations)
-
         end = time.time()
 
         runtimes.append(end - start)
+
+    save_dir = config.get("output", {}).get("save_dir", "plots")
+    os.makedirs(save_dir, exist_ok=True)
 
     plt.figure()
     plt.plot(sizes, runtimes, marker="o")
     plt.xlabel("Number of State Variables")
     plt.ylabel("Runtime (seconds)")
     plt.title(f"Scaling ({mode})")
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, f"heat_scaling_{mode}.png"), dpi=300)
+    plt.close()
 
 
 # ------------------------------------------------------------
