@@ -18,12 +18,12 @@ quantum:
   delta: 0.001
 
 scaling:
-  sizes: [2, 4, 8]
-  iterations: 17
+  sizes: [4]
+  iterations: 35
 
 plots:
   show_solution: true
   show_scaling: true
 
 output:
-  save_dir: plots2
+  save_dir: plots3

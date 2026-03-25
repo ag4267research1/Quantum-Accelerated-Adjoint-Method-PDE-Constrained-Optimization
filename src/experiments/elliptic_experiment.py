@@ -8,6 +8,7 @@ Generates:
 """
 
 import time
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -50,13 +51,13 @@ def run_experiment(config):
         last_model = model
 
         # initial control
-        u0 = np.ones(model.num_dofs)
+        x0 = np.ones(model.num_dofs)
 
         # --------------------------------------------
         # Build system once (for condition number)
         # --------------------------------------------
 
-        A, b0 = model.build_system(u0)
+        A, b0 = model.build_system(x0)
 
         print(f"experiment_type = {model.exp_type}")
         print(f"A[0,0] = {A[0,0]:.6e}")
@@ -98,7 +99,7 @@ def run_experiment(config):
 
         start = time.time()
         result = optimizer.optimize(
-            u0,
+            x0,
             max_iter=config.get("max_iter", 10),
             alpha=config.get("step_size", 1e-2)
         )
@@ -115,21 +116,37 @@ def run_experiment(config):
     # PLOTS
     # ============================================================
 
-    plot_runtime(sizes, runtimes)
-    plot_condition_number(sizes, condition_numbers)
-    plot_solution(last_result, last_model, last_state_solver)
+    plot_runtime(sizes, runtimes, config)
+    plot_condition_number(sizes, condition_numbers, config)
+    plot_solution(last_result, last_model, last_state_solver, config)
+
+
+# ============================================================
+# Helper: output directory
+# ============================================================
+
+def get_output_dir(config):
+    """
+    Get output directory for saved plots.
+    """
+
+    output_dir = config.get("output_dir", "plots")
+    os.makedirs(output_dir, exist_ok=True)
+    return output_dir
 
 
 # ============================================================
 # PLOT 1: Runtime vs state variables
 # ============================================================
 
-def plot_runtime(sizes, runtimes):
+def plot_runtime(sizes, runtimes, config):
     """
     Plot: number of state variables vs runtime
     """
 
     state_vars = sizes
+    output_dir = get_output_dir(config)
+    exp_type = config.get("experiment_type", "exp")
 
     plt.figure()
     plt.plot(state_vars, runtimes, marker='o')
@@ -137,19 +154,23 @@ def plot_runtime(sizes, runtimes):
     plt.ylabel("Runtime (seconds)")
     plt.title("State Variables vs Runtime")
     plt.grid(True)
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{exp_type}_runtime.png"), dpi=300)
+    plt.close()
 
 
 # ============================================================
 # PLOT 2: Condition number vs state variables
 # ============================================================
 
-def plot_condition_number(sizes, conds):
+def plot_condition_number(sizes, conds, config):
     """
     Plot: number of state variables vs condition number
     """
 
     state_vars = sizes
+    output_dir = get_output_dir(config)
+    exp_type = config.get("experiment_type", "exp")
 
     plt.figure()
     plt.plot(state_vars, conds, marker='o')
@@ -158,25 +179,35 @@ def plot_condition_number(sizes, conds):
     plt.title("State Variables vs Condition Number")
     plt.yscale("log")
     plt.grid(True)
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{exp_type}_condition_number.png"), dpi=300)
+    plt.close()
 
 
 # ============================================================
 # PLOT 3: Solution
 # ============================================================
 
-def plot_solution(result, model, state_solver):
+def plot_solution(result, model, state_solver, config):
     """
-    Plot final state y
+    Plot final state u(x)
     """
 
+    # optimizer returns the optimal control x*
     x_opt = result.x_star
-    y = state_solver(model=model, x=x_opt)
+
+    # solve the state equation to get the final state u
+    u = state_solver(model=model, x=x_opt)
+
+    output_dir = get_output_dir(config)
+    exp_type = config.get("experiment_type", "exp")
 
     plt.figure()
-    plt.plot(model.x, y, marker='o')
+    plt.plot(model.x, u, marker='o')
     plt.title("Elliptic PDE Solution")
     plt.xlabel("x")
-    plt.ylabel("State y")
+    plt.ylabel("State u(x)")
     plt.grid(True)
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{exp_type}_solution.png"), dpi=300)
+    plt.close()
