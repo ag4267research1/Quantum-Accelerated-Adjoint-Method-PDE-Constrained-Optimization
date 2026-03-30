@@ -16,8 +16,10 @@ def inner_product(left, right, shots=1024, **kwargs):
 
     if isinstance(left, Statevector):
         p_vec = left.data
+        left_is_statevector = True   # CHANGED: track whether left is already a normalized quantum state
     else:
         p_vec = np.asarray(left, dtype=complex)
+        left_is_statevector = False  # CHANGED
 
     w_vec = np.asarray(right, dtype=complex)
 
@@ -100,5 +102,23 @@ def inner_product(left, right, shots=1024, **kwargs):
     # --------------------------------------------------
 
     overlap = np.sqrt(max(0.0, 2 * p0 - 1))
+
+    # CHANGED: if left is a Statevector from qlsa_solver, it is already the
+    # normalized adjoint state |p>. The optimizer multiplies by p_scale outside,
+    # so here we should only restore the norm of w_i.
+    # If left is a classical vector, we restore both norms.
+    if left_is_statevector:
+        overlap = w_norm * overlap
+    else:
+        overlap = p_norm * w_norm * overlap
+
+    # CHANGED: the plain swap test only gives the magnitude of the overlap.
+    # The optimizer needs a signed scalar, so we recover the sign from the
+    # real part of the padded-vector inner product.
+    sign = np.sign(np.real(np.vdot(p_pad, w_pad)))
+    if sign == 0:
+        sign = 1.0
+
+    overlap = float(sign * overlap)
 
     return overlap

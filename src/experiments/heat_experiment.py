@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -74,11 +75,55 @@ def get_solver_components(mode):
         return (
             qlsa_solver,
             swap_test_inner_product,
-            hybrid_gradient_estimator
+            None
         )
 
     else:
         raise ValueError(f"Unknown solver mode: {mode}")
+
+
+# ------------------------------------------------------------
+# Helper function: save optimization history plots
+# ------------------------------------------------------------
+
+def save_history_plots(history, output_dir, mode):
+    """
+    Save iteration vs objective, gradient norm, and condition number plots.
+    """
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    it_obj = np.arange(len(history["objective"]))
+    it_grad = np.arange(len(history["gradient_norm"]))
+    it_cond = np.arange(len(history["condition_number"]))
+
+    plt.figure()
+    plt.plot(it_obj, history["objective"])
+    plt.xlabel("Iteration")
+    plt.ylabel("Objective")
+    plt.title(f"Objective vs Iteration ({mode})")
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{mode}_objective_vs_iteration.png"))
+    plt.close()
+
+    plt.figure()
+    plt.plot(it_grad, history["gradient_norm"])
+    plt.xlabel("Iteration")
+    plt.ylabel("Gradient Norm")
+    plt.title(f"Gradient Norm vs Iteration ({mode})")
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{mode}_gradient_vs_iteration.png"))
+    plt.close()
+
+    plt.figure()
+    plt.plot(it_cond, history["condition_number"])
+    plt.xlabel("Iteration")
+    plt.ylabel("Condition Number")
+    plt.title(f"Condition Number vs Iteration ({mode})")
+    plt.yscale("log")
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{mode}_condition_number_vs_iteration.png"))
+    plt.close()
 
 
 # ------------------------------------------------------------
@@ -119,8 +164,23 @@ def plot_solution(config):
         control_gradient_estimator=gradient_estimator
     )
 
+    optimize_kwargs = {}
+    if mode == "hybrid":
+        quantum_cfg = config.get("quantum", {})
+        optimize_kwargs["shots"] = quantum_cfg.get("shots", 64)
+        optimize_kwargs["delta"] = quantum_cfg.get("delta", 1e-3)
+        optimize_kwargs["N"] = quantum_cfg.get("spectral_points", 16)
+        optimize_kwargs["use_preconditioning"] = quantum_cfg.get("use_preconditioning", True)
+
+    # CHANGED: define one output directory and save all plots there
+    plots_cfg = config.get("plots", {})
+    output_dir = plots_cfg.get("output_dir", "output")
+
     # run optimization
-    result = optimizer.optimize(x0, max_iter=max_iter)
+    result = optimizer.optimize(x0, max_iter=max_iter, **optimize_kwargs)
+
+    # CHANGED: save history plots in the output directory
+    save_history_plots(result.history, output_dir=output_dir, mode=mode)
 
     # optimizer returns the optimal control
     x = result.x_star
@@ -135,7 +195,9 @@ def plot_solution(config):
     plt.xlabel("y")
     plt.ylabel("Temperature (state u)")
     plt.title(f"Heat Equation Solution ({mode})")
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{mode}_solution_profile.png"))
+    plt.close()
 
 
 # ------------------------------------------------------------
@@ -161,6 +223,10 @@ def scaling_experiment(config):
 
     runtimes = []
 
+    plots_cfg = config.get("plots", {})
+    output_dir = plots_cfg.get("output_dir", "output")
+    os.makedirs(output_dir, exist_ok=True)
+
     for n in sizes:
 
         model = HeatModel(n=n, nx=nx)
@@ -176,9 +242,17 @@ def scaling_experiment(config):
             control_gradient_estimator=gradient_estimator
         )
 
+        optimize_kwargs = {}
+        if mode == "hybrid":
+            quantum_cfg = config.get("quantum", {})
+            optimize_kwargs["shots"] = quantum_cfg.get("shots", 64)
+            optimize_kwargs["delta"] = quantum_cfg.get("delta", 1e-3)
+            optimize_kwargs["N"] = quantum_cfg.get("spectral_points", 16)
+            optimize_kwargs["use_preconditioning"] = quantum_cfg.get("use_preconditioning", True)
+
         start = time.time()
 
-        optimizer.optimize(x0, max_iter=iterations)
+        optimizer.optimize(x0, max_iter=iterations, **optimize_kwargs)
 
         end = time.time()
 
@@ -189,7 +263,9 @@ def scaling_experiment(config):
     plt.xlabel("Number of State Variables")
     plt.ylabel("Runtime (seconds)")
     plt.title(f"Scaling ({mode})")
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{mode}_scaling_runtime.png"))
+    plt.close()
 
 
 # ------------------------------------------------------------
