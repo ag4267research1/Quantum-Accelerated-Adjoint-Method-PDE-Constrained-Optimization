@@ -14,8 +14,12 @@ from src.classical.classical_solver import (
 )
 
 # hybrid quantum components
-from src.quantum.qlsa_solver import adjoint_solver as qlsa_solver
-from src.quantum.swap_test import inner_product as swap_test_inner_product
+# from src.quantum.qlsa_solver import adjoint_solver as qlsa_solver
+# from src.quantum.swap_test import inner_product as swap_test_inner_product
+from src.quantum.qlsa_solver import (
+    adjoint_solver as qlsa_solver,
+    inner_product as swap_test_inner_product,
+)
 from src.quantum.spectral_gradient import spectral_gradient
 
 
@@ -165,6 +169,16 @@ def plot_solution(config):
     )
 
     optimize_kwargs = {}
+
+    # CHANGED: forward optimizer config to optimizer.optimize(...)
+    optimizer_cfg = config.get("optimizer", {})
+    optimize_kwargs["alpha"] = optimizer_cfg.get("alpha", 1e-3)
+    optimize_kwargs["use_backtracking"] = optimizer_cfg.get("use_backtracking", True)
+    optimize_kwargs["armijo_c"] = optimizer_cfg.get("armijo_c", 1e-6)
+    optimize_kwargs["backtracking_tau"] = optimizer_cfg.get("backtracking_tau", 0.5)
+    optimize_kwargs["min_step"] = optimizer_cfg.get("min_step", 1e-10)
+    optimize_kwargs["max_backtracks"] = optimizer_cfg.get("max_backtracks", 30)
+
     if mode == "hybrid":
         quantum_cfg = config.get("quantum", {})
         optimize_kwargs["shots"] = quantum_cfg.get("shots", 64)
@@ -243,6 +257,16 @@ def scaling_experiment(config):
         )
 
         optimize_kwargs = {}
+
+        # CHANGED: forward optimizer config to optimizer.optimize(...)
+        optimizer_cfg = config.get("optimizer", {})
+        optimize_kwargs["alpha"] = optimizer_cfg.get("alpha", 1e-3)
+        optimize_kwargs["use_backtracking"] = optimizer_cfg.get("use_backtracking", True)
+        optimize_kwargs["armijo_c"] = optimizer_cfg.get("armijo_c", 1e-6)
+        optimize_kwargs["backtracking_tau"] = optimizer_cfg.get("backtracking_tau", 0.5)
+        optimize_kwargs["min_step"] = optimizer_cfg.get("min_step", 1e-10)
+        optimize_kwargs["max_backtracks"] = optimizer_cfg.get("max_backtracks", 30)
+
         if mode == "hybrid":
             quantum_cfg = config.get("quantum", {})
             optimize_kwargs["shots"] = quantum_cfg.get("shots", 64)

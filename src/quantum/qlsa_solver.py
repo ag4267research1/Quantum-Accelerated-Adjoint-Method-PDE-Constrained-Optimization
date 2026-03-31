@@ -1,26 +1,194 @@
 import numpy as np
+from dataclasses import dataclass
+
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import Statevector
+from qiskit_aer import AerSimulator
 
 from qlsas.algorithms.hhl.hhl import HHL
 from qlsas.data_loader import StatePrep
-from qlsas.solver import QuantumLinearSolver
-from qiskit.quantum_info import Statevector   # CHANGED: return a Statevector for swap test
-from qiskit_aer import AerSimulator
+from qlsas.executer import Executer
+from qlsas.post_processor import Post_Processor
+from qlsas.transpiler import Transpiler
+
+"""
+Quantum adjoint solver wrapper for PDE-constrained optimization.
+
+This project prepares the linear-system data needed for an
+HHL + swap-test overlap query, instead of reconstructing the full adjoint
+vector by measuring the solution register.
+
+Main idea
+---------
+The optimizer expects the adjoint solve to return
+
+    (p_state_like, p_scale)
+
+where
+    - p_state_like is something that the inner-product routine can use
+    - p_scale = ||p|| is the norm of the recovered adjoint vector
+
+In this swap-test-based version:
+    - p_state_like is an AdjointSwapHandle
+    - p_scale is computed classically from the original adjoint system
+
+Two modes are supported:
+
+1. No preconditioning
+   We use the original adjoint system
+
+       C_u^T p = J_u^T
+
+   and prepare the padded HHL input directly.
+
+2. Plain Jacobi preconditioning
+   We apply left Jacobi preconditioning
+
+       B         = D^{-1} C_u^T
+       rhs_tilde = D^{-1} J_u^T
+
+   where D = diag(C_u^T).
+
+   Since plain left Jacobi generally destroys symmetry, we restore
+   symmetry by embedding the preconditioned system into the block form
+
+       H = [[0,   B ],
+            [B^T, 0 ]]
+
+   and prepare the embedded HHL input instead.
+
+In both cases, the optimizer still gets:
+    - a handle for overlap estimation through HHL + swap test
+    - a scalar norm p_scale
+"""
+
+# ----------------------------------------------------------
+# Data structure passed from adjoint_solver to inner_product
+# ----------------------------------------------------------
+
+@dataclass
+class AdjointSwapHandle:
+    """
+    Lightweight container describing the HHL problem instance needed for a
+    later swap-test overlap query.
+
+    Fields
+    ------
+    system_matrix : ndarray
+        The padded matrix actually passed to HHL.
+    rhs_vector : ndarray
+        The normalized padded right-hand side actually passed to HHL.
+    original_dim : int
+        The unpadded dimension of the system passed to HHL.
+        This is n in the direct solve case, and 2n in the embedded case.
+    state_dim : int
+        The original adjoint dimension n.
+    embedded : bool
+        Whether the HHL system is the block-embedded one.
+    shots : int
+        Default shot count to use in the swap test path.
+    """
+    system_matrix: np.ndarray
+    rhs_vector: np.ndarray
+    original_dim: int
+    state_dim: int
+    embedded: bool
+    shots: int
 
 
 # ----------------------------------------------------------
-# Global cache
+# Small cache for HHL swap-test runtime objects
 # ----------------------------------------------------------
 
-_SOLVER_CACHE = {}
+_SWAP_RUNTIME_CACHE = {}
 
+
+def _get_swap_runtime(dim):
+    """
+    Cache the HHL swap-test runtime objects keyed by padded dimension.
+    """
+    key = (dim, "swap_test")
+
+    if key not in _SWAP_RUNTIME_CACHE:
+        hhl = HHL(
+            state_prep=StatePrep(method="default"),
+            readout="swap_test",
+            num_qpe_qubits=int(np.log2(dim)),
+            eig_oracle="classical",
+        )
+
+        backend = AerSimulator()
+        executer = Executer()
+        post_processor = Post_Processor()
+
+        _SWAP_RUNTIME_CACHE[key] = (hhl, backend, executer, post_processor)
+
+    return _SWAP_RUNTIME_CACHE[key]
+
+
+# ----------------------------------------------------------
+# Utilities
+# ----------------------------------------------------------
 
 def _next_power_of_two(n):
-    """Return smallest power of two >= n."""
+    """
+    Return the smallest power of two greater than or equal to n.
+
+    Example
+    -------
+    n = 5  -> returns 8
+    n = 8  -> returns 8
+    n = 0  -> returns 1
+    """
     return 1 if n == 0 else 2 ** int(np.ceil(np.log2(n)))
 
 
 def _pad_linear_system(A, b):
-    """Pad Ax=b so the dimension becomes a power of two."""
+    r"""
+    Pad a square linear system \(A x = b\) to the next power-of-two dimension.
+
+    Let \(n = \dim(b)\), and let \(m\) be the smallest power of two such that
+    \(m \ge n\). We construct the padded system
+
+    \[
+    A_{\mathrm{pad}} x_{\mathrm{pad}} = b_{\mathrm{pad}},
+    \]
+
+    where
+
+    \[
+    A_{\mathrm{pad}} =
+    \begin{bmatrix}
+    A & 0 \\
+    0 & I
+    \end{bmatrix},
+    \qquad
+    b_{\mathrm{pad}} =
+    \begin{bmatrix}
+    b \\
+    0
+    \end{bmatrix}.
+    \]
+
+    The lower-right identity block prevents the padding from introducing
+    singular directions.
+
+    Parameters
+    ----------
+    A : ndarray
+        Real square system matrix.
+    b : ndarray
+        Real right-hand side vector.
+
+    Returns
+    -------
+    A_pad : ndarray
+        Padded square matrix of power-of-two dimension.
+    b_pad : ndarray
+        Padded right-hand side vector.
+    n : int
+        Original unpadded dimension.
+    """
     n = len(b)
     m = _next_power_of_two(n)
 
@@ -36,105 +204,162 @@ def _pad_linear_system(A, b):
     return A_pad, b_pad, n
 
 
-def _get_solver(dim, shots):
+def _jacobi_left_precondition(C_u_T, J_u_T, eps=1e-12):
     """
-    Cache the solver so we don't rebuild/transpile HHL
-    every optimizer iteration.
+    Apply plain Jacobi LEFT preconditioning to
+
+        C_u^T p = J_u^T
+
+    using
+
+        B         = D^{-1} C_u^T
+        rhs_tilde = D^{-1} J_u^T
+
+    where D = diag(C_u^T).
+
+    Notes
+    -----
+    Plain left Jacobi does NOT preserve symmetry by itself. That is why, when
+    preconditioning is enabled, we later restore symmetry with a block embedding.
     """
-    key = (dim, shots)
+    d = np.asarray(np.diag(C_u_T), dtype=float).copy()
 
-    if key not in _SOLVER_CACHE:
-        hhl = HHL(
-            state_prep=StatePrep(method="default"),
-            readout="measure_x",
-            num_qpe_qubits=int(np.log2(dim)),
-            eig_oracle="classical",
-        )
+    tiny = np.abs(d) < eps
+    d[tiny] = eps
 
-        backend = AerSimulator()
+    D_inv = np.diag(1.0 / d)
 
-        solver = QuantumLinearSolver(
-            qlsa=hhl,
-            backend=backend,
-            shots=shots,
-            optimization_level=0,
-        )
+    B = D_inv @ C_u_T
+    rhs_tilde = D_inv @ J_u_T
 
-        _SOLVER_CACHE[key] = solver
-
-    return _SOLVER_CACHE[key]
+    return B, rhs_tilde, D_inv
 
 
-def _hermitianize(A):
+def _hermitian_embed(B):
     """
-    Numerical cleanup to enforce exact Hermitian symmetry.
-    For real matrices this is just symmetrization.
+    Build the real symmetric block embedding
+
+        H = [[0,  B ],
+             [B^T, 0 ]].
+
+    Since this pipeline is real-valued, Hermitian = symmetric.
     """
-    return 0.5 * (A + A.T.conjugate())
+    n = B.shape[0]
+    H = np.zeros((2 * n, 2 * n), dtype=float)
+    H[:n, n:] = B
+    H[n:, :n] = B.T
+    return H
 
 
-def _symmetric_jacobi_precondition(A, rhs, eps=1e-12):
+def _embedded_rhs(rhs):
     """
-    Apply symmetric Jacobi scaling
+    Build the embedded right-hand side
 
-        A_tilde = D^{-1/2} A D^{-1/2}
-        b_tilde = D^{-1/2} rhs
+        [rhs; 0]
 
-    which preserves Hermitian structure.
+    for the block system
 
-    Returns
-    -------
-    A_tilde, b_tilde, D_inv_sqrt
+        [[0,  B ],
+         [B^T, 0 ]] [u; p] = [rhs; 0].
+
+    In this system, the lower block of the solution corresponds to p.
     """
-    d = np.real(np.diag(A)).copy()
-
-    # If the full diagonal is negative, flip the whole system sign.
-    if np.all(d < 0):
-        A = -A
-        rhs = -rhs
-        d = -d
-
-    # Guard against zero/tiny diagonal entries.
-    d[np.abs(d) < eps] = eps
-
-    if np.any(d <= 0):
-        raise ValueError(
-            "Symmetric Jacobi requires a positive diagonal. "
-            "The adjoint matrix diagonal is not suitable for D^{-1/2} scaling."
-        )
-
-    D_inv_sqrt = np.diag(1.0 / np.sqrt(d))
-
-    A_tilde = D_inv_sqrt @ A @ D_inv_sqrt
-    b_tilde = D_inv_sqrt @ rhs
-
-    # Remove tiny numerical asymmetry
-    A_tilde = _hermitianize(A_tilde)
-
-    return A_tilde, b_tilde, D_inv_sqrt
+    rhs = np.asarray(rhs, dtype=float).flatten()
+    zeros = np.zeros_like(rhs)
+    return np.concatenate([rhs, zeros])
 
 
 def _vector_to_state_and_norm(vec):
     """
-    CHANGED: convert a recovered classical vector into
-    (normalized Statevector, original norm) for the swap test.
+    Convert a recovered real classical vector into
+
+        (normalized Statevector, original norm).
+
+    This is still used in the zero-RHS branch.
     """
-    vec = np.asarray(vec, dtype=complex).flatten()
+    vec = np.asarray(vec, dtype=float).flatten()
     m = _next_power_of_two(len(vec))
 
-    vec_pad = np.zeros(m, dtype=complex)
+    vec_pad = np.zeros(m, dtype=float)
     vec_pad[:len(vec)] = vec
 
     vec_norm = np.linalg.norm(vec_pad)
 
     if vec_norm == 0:
-        zero_state = np.zeros(m, dtype=complex)
+        zero_state = np.zeros(m, dtype=float)
         zero_state[0] = 1.0
         return Statevector(zero_state), 0.0
 
     vec_pad = vec_pad / vec_norm
     return Statevector(vec_pad), float(vec_norm)
 
+
+def _classical_adjoint_norm(C_u_T, J_u_T):
+    """
+    Compute ||p|| from the original adjoint system
+
+        C_u^T p = J_u^T
+
+    using a classical solve. This provides the scale factor needed by
+    the optimizer while the overlap itself is estimated through HHL + swap test.
+    """
+    try:
+        p = np.linalg.solve(C_u_T, J_u_T)
+    except np.linalg.LinAlgError:
+        p = np.linalg.lstsq(C_u_T, J_u_T, rcond=None)[0]
+
+    return float(np.linalg.norm(p))
+
+
+def _build_embedded_test_vector(handle, right):
+    """
+    Build the swap-test vector in the same padded space as the HHL solve.
+
+    If the adjoint handle corresponds to the embedded system
+
+        H [u; p] = [rhs; 0],
+
+    then we compare against
+
+        [0; w_i]
+
+    so that the overlap targets the lower p block.
+
+    If the handle corresponds to the direct system, we compare against w_i
+    directly.
+
+    Returns
+    -------
+    v_unit : ndarray
+        Normalized padded swap-test vector.
+    w_norm : float
+        Norm of the unnormalized padded vector, used to restore scale.
+    """
+    w_vec = np.asarray(right, dtype=float).flatten()
+    padded_dim = len(handle.rhs_vector)
+
+    if handle.embedded:
+        v = np.zeros(handle.original_dim, dtype=float)
+        n = handle.state_dim
+        v[n:n + len(w_vec)] = w_vec
+    else:
+        v = np.zeros(handle.original_dim, dtype=float)
+        v[:len(w_vec)] = w_vec
+
+    v_pad = np.zeros(padded_dim, dtype=float)
+    v_pad[:len(v)] = v
+
+    w_norm = np.linalg.norm(v_pad)
+    if w_norm == 0:
+        return v_pad, 0.0
+
+    v_unit = v_pad / w_norm
+    return v_unit, w_norm
+
+
+# ----------------------------------------------------------
+# Public API 1: adjoint solve preparation
+# ----------------------------------------------------------
 
 def adjoint_solver(
     A,
@@ -146,131 +371,284 @@ def adjoint_solver(
     return_diagnostics=False,
     **kwargs,
 ):
-    """
-    Solve the adjoint system
+    r"""
+    Prepare the real-valued adjoint system for HHL + swap-test overlap queries.
 
-        A^T p = rhs
+    Original adjoint system:
 
-    using HHL. Optionally applies symmetric Jacobi preconditioning
-    that preserves Hermitian structure.
+        C_u^T p = J_u^T.
 
-    Parameters
-    ----------
-    A : ndarray
-        State Jacobian.
-    rhs : ndarray
-        Right-hand side of adjoint system.
-    shots : int
-        Number of shots for the quantum backend.
-    use_preconditioning : bool
-        Whether to apply symmetric Jacobi preconditioning.
-    eps : float
-        Small diagonal safeguard for preconditioning.
-    check_hermitian : bool
-        Whether to enforce Hermitian checks.
-    return_diagnostics : bool
-        If True, also return a dict with conditioning info.
+    Behavior
+    --------
+    1. If use_preconditioning=False:
+       prepare the usual padded system directly on C_u^T.
+
+    2. If use_preconditioning=True:
+       form plain Jacobi-left-preconditioned system
+
+           B         = D^{-1} C_u^T
+           rhs_tilde = D^{-1} J_u^T
+
+       then restore symmetry by embedding it as
+
+           H = [[0,  B ],
+                [B^T, 0 ]]
+
+       and prepare the embedded system
+
+           H [u; p] = [rhs_tilde; 0].
 
     Returns
     -------
-    (p_state, p_scale) : tuple
-        p_state is a normalized Statevector for the swap test.
-        p_scale = ||p|| is the recovered adjoint norm in the original coordinates.
+    (handle, p_scale)
+        handle  : AdjointSwapHandle consumed later by inner_product
+        p_scale : ||p|| from the original adjoint system
 
     or
 
-    ((p_state, p_scale), diagnostics) if return_diagnostics=True
+    (handle, p_scale, diagnostics) if return_diagnostics=True
     """
 
     # --------------------------------------------------
-    # Form adjoint system
+    # Form adjoint operator and RHS
     # --------------------------------------------------
-    A_adj = np.asarray(A.T, dtype=float).copy()
-    rhs_adj = np.asarray(rhs, dtype=float).copy()
+    C_u = np.asarray(A, dtype=float).copy()
+    J_u_T = np.asarray(rhs, dtype=float).copy()
+    C_u_T = C_u.T
 
-    # Numerical Hermitian cleanup
-    A_adj = _hermitianize(A_adj)
+    cond_raw = np.linalg.cond(C_u_T)
 
-    if check_hermitian and not np.allclose(A_adj, A_adj.T.conjugate(), atol=1e-10):
-        raise ValueError("Adjoint matrix is not Hermitian.")
-
-    cond_raw = np.linalg.cond(A_adj)
+    # compute the original adjoint norm once, classically
+    p_scale = _classical_adjoint_norm(C_u_T, J_u_T)
 
     # --------------------------------------------------
-    # Optional preconditioning
+    # Zero-RHS shortcut
     # --------------------------------------------------
-    if use_preconditioning:
-        A_hhl, rhs_hhl, D_inv_sqrt = _symmetric_jacobi_precondition(
-            A_adj, rhs_adj, eps=eps
-        )
-    else:
-        A_hhl = A_adj
-        rhs_hhl = rhs_adj
-        D_inv_sqrt = None
-
-    if check_hermitian and not np.allclose(A_hhl, A_hhl.T.conjugate(), atol=1e-10):
-        raise ValueError("Matrix passed to HHL is not Hermitian.")
-
-    cond_pre = np.linalg.cond(A_hhl)
-
-    # --------------------------------------------------
-    # Normalize RHS for HHL
-    # --------------------------------------------------
-    rhs_norm = np.linalg.norm(rhs_hhl)
-    if rhs_norm == 0:
-        # CHANGED: return normalized quantum state + zero scale
-        p_state, p_scale = _vector_to_state_and_norm(np.zeros_like(rhs_adj))
+    rhs_norm_direct = np.linalg.norm(J_u_T)
+    if rhs_norm_direct == 0:
+        p_state, p_scale_zero = _vector_to_state_and_norm(np.zeros_like(J_u_T))
         if return_diagnostics:
-            return (p_state, p_scale), {
+            return p_state, p_scale_zero, {
+                "cond_raw": cond_raw,
+                "cond_pre": cond_raw,
+                "cond_pad": cond_raw,
+                "rhs_norm": 0.0,
+                "used_preconditioning": False,
+            }
+        return p_state, p_scale_zero
+
+    # --------------------------------------------------
+    # Case 1: No preconditioning -> direct padded HHL data
+    # --------------------------------------------------
+    if not use_preconditioning:
+        if check_hermitian and not np.allclose(C_u_T, C_u_T.T, atol=1e-10):
+            raise ValueError("Adjoint matrix passed to HHL is not symmetric.")
+
+        b_unit = J_u_T / rhs_norm_direct
+
+        A_pad, b_pad, original_dim = _pad_linear_system(C_u_T, b_unit)
+        cond_pad = np.linalg.cond(A_pad)
+
+        handle = AdjointSwapHandle(
+            system_matrix=A_pad,
+            rhs_vector=b_pad,
+            original_dim=original_dim,
+            state_dim=len(J_u_T),
+            embedded=False,
+            shots=int(shots),
+        )
+
+        if return_diagnostics:
+            return handle, p_scale, {
+                "cond_raw": cond_raw,
+                "cond_pre": cond_raw,
+                "cond_pad": cond_pad,
+                "rhs_norm": rhs_norm_direct,
+                "used_preconditioning": False,
+            }
+
+        return handle, p_scale
+
+    # --------------------------------------------------
+    # Case 2: Plain Jacobi preconditioning + block embedding
+    # --------------------------------------------------
+    B, rhs_tilde, D_inv = _jacobi_left_precondition(C_u_T, J_u_T, eps=eps)
+    cond_pre = np.linalg.cond(B)
+
+    H = _hermitian_embed(B)
+
+    if check_hermitian and not np.allclose(H, H.T, atol=1e-10):
+        raise ValueError("Embedded preconditioned matrix passed to HHL is not symmetric.")
+
+    b_embed = _embedded_rhs(rhs_tilde)
+
+    rhs_norm = np.linalg.norm(b_embed)
+    if rhs_norm == 0:
+        p_state, p_scale_zero = _vector_to_state_and_norm(np.zeros_like(J_u_T))
+        if return_diagnostics:
+            return p_state, p_scale_zero, {
                 "cond_raw": cond_raw,
                 "cond_pre": cond_pre,
                 "cond_pad": cond_pre,
                 "rhs_norm": 0.0,
+                "embedded_dim": 2 * len(J_u_T),
+                "used_preconditioning": True,
             }
-        return p_state, p_scale
+        return p_state, p_scale_zero
 
-    b_unit = rhs_hhl / rhs_norm
+    b_unit = b_embed / rhs_norm
 
-    # --------------------------------------------------
-    # Pad system
-    # --------------------------------------------------
-    A_pad, b_pad, original_dim = _pad_linear_system(A_hhl, b_unit)
-    cond_pad = np.linalg.cond(A_pad)
-    dim = len(b_pad)
+    H_pad, b_pad, original_dim = _pad_linear_system(H, b_unit)
+    cond_pad = np.linalg.cond(H_pad)
 
-    # --------------------------------------------------
-    # Solve using cached HHL framework
-    # --------------------------------------------------
-    solver = _get_solver(dim, shots)
-    solution = solver.solve(A_pad, b_pad)
-
-    # --------------------------------------------------
-    # Remove padding
-    # --------------------------------------------------
-    y = np.asarray(solution[:original_dim], dtype=float)
-
-    # --------------------------------------------------
-    # Undo RHS normalization
-    # --------------------------------------------------
-    y = y * rhs_norm
-
-    # --------------------------------------------------
-    # Recover original adjoint variable
-    # --------------------------------------------------
-    if D_inv_sqrt is not None:
-        p = D_inv_sqrt @ y
-    else:
-        p = y
-
-    # CHANGED: return normalized quantum state + recovered norm
-    p_state, p_scale = _vector_to_state_and_norm(p)
+    handle = AdjointSwapHandle(
+        system_matrix=H_pad,
+        rhs_vector=b_pad,
+        original_dim=original_dim,
+        state_dim=len(J_u_T),
+        embedded=True,
+        shots=int(shots),
+    )
 
     if return_diagnostics:
-        return (p_state, p_scale), {
+        return handle, p_scale, {
             "cond_raw": cond_raw,
             "cond_pre": cond_pre,
             "cond_pad": cond_pad,
             "rhs_norm": rhs_norm,
+            "embedded_dim": 2 * len(J_u_T),
+            "used_preconditioning": True,
         }
 
-    return p_state, p_scale
+    return handle, p_scale
+
+
+# ----------------------------------------------------------
+# Public API 2: overlap estimation
+# ----------------------------------------------------------
+
+def inner_product(left, right, shots=1024, **kwargs):
+    r"""
+    Estimate the overlap magnitude used in the reduced-gradient assembly.
+
+    Two modes are supported.
+
+    1. If `left` is an AdjointSwapHandle, this routine performs a true
+       HHL + swap-test overlap estimation using the old QLSAs swap-test
+       readout path.
+
+    2. Otherwise, it falls back to a local standalone swap test between
+       the supplied vectors/states.
+
+    Real-valued setting
+    -------------------
+    This implementation assumes the current pipeline is real-valued.
+    """
+
+    # --------------------------------------------------
+    # Mode 1: HHL + swap-test readout from adjoint handle
+    # --------------------------------------------------
+    if isinstance(left, AdjointSwapHandle):
+        v_unit, w_norm = _build_embedded_test_vector(left, right)
+
+        if w_norm == 0:
+            return 0.0
+
+        dim = len(left.rhs_vector)
+        hhl, backend, executer, post_processor = _get_swap_runtime(dim)
+
+        circuit = hhl.build_circuit(
+            left.system_matrix,
+            left.rhs_vector,
+            swap_test_vector=v_unit,
+        )
+
+        transpiler = Transpiler(
+            circuit=circuit,
+            backend=backend,
+            optimization_level=0,
+        )
+        transpiled_circuit = transpiler.optimize()
+
+        result = executer.run(
+            transpiled_circuit,
+            backend,
+            int(shots),
+            verbose=False,
+        )
+
+        overlap = post_processor.process_swap_test(
+            result,
+            left.system_matrix,
+            left.rhs_vector,
+            v_unit,
+        )[0]
+
+        # We use only the magnitude from the swap test and restore ||w_i||.
+        return float(abs(overlap) * w_norm)
+
+    # --------------------------------------------------
+    # Mode 2: fallback local standalone swap test
+    # --------------------------------------------------
+    if isinstance(left, Statevector):
+        # Current pipeline is real-valued, so we use the real amplitudes.
+        p_vec = np.asarray(np.real(left.data), dtype=float)
+        left_is_statevector = True
+    else:
+        p_vec = np.asarray(left, dtype=float)
+        left_is_statevector = False
+
+    w_vec = np.asarray(right, dtype=float)
+
+    # Enforce at least one data qubit so the swap-test circuit is
+    # well-defined even if one of the vectors has length 1.
+    max_len = max(len(p_vec), len(w_vec))
+    n = max(1, int(np.ceil(np.log2(max_len))))
+    size = 2 ** n
+
+    p_pad = np.zeros(size, dtype=float)
+    w_pad = np.zeros(size, dtype=float)
+
+    p_pad[:len(p_vec)] = p_vec
+    w_pad[:len(w_vec)] = w_vec
+
+    p_norm = np.linalg.norm(p_pad)
+    w_norm = np.linalg.norm(w_pad)
+
+    if p_norm == 0 or w_norm == 0:
+        return 0.0
+
+    p_pad = p_pad / p_norm
+    w_pad = w_pad / w_norm
+
+    qc = QuantumCircuit(1 + 2 * n, 1)
+
+    qc.initialize(p_pad, range(1, n + 1))
+    qc.initialize(w_pad, range(n + 1, 2 * n + 1))
+
+    qc.h(0)
+
+    for i in range(n):
+        qc.cswap(0, 1 + i, 1 + n + i)
+
+    qc.h(0)
+    qc.measure(0, 0)
+
+    backend = AerSimulator()
+    result = backend.run(qc, shots=int(shots)).result()
+    counts = result.get_counts()
+
+    # p0 = Prob(ancilla = 0)
+    p0 = counts.get("0", 0) / int(shots)
+
+    # For normalized states:
+    #   p0 = (1 + |<p_pad, w_pad>|^2) / 2
+    overlap = np.sqrt(max(0.0, 2.0 * p0 - 1.0))
+
+    if left_is_statevector:
+        overlap = w_norm * overlap
+    else:
+        overlap = p_norm * w_norm * overlap
+
+    # Return magnitude only; no classical sign recovery.
+    return float(overlap)

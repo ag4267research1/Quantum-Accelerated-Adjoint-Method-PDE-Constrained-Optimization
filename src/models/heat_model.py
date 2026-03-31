@@ -55,7 +55,7 @@ class HeatModel:
         k=1.0,
         T_inf=50.0,
         h=0.5,
-        source_scale=0.05,
+        source_scale=0.1,
         objective_type="tracking",
         beta=1e-3,
         target=None,

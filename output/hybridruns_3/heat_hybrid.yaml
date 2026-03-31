@@ -1,7 +1,7 @@
 experiment: heat
 
 model:
-  n: 16
+  n: 32
   nx: 1
 
 optimizer:
@@ -21,4 +21,4 @@ scaling:
 plots:
   show_solution: true
   show_scaling: false
-  output_dir: output/hybridruns_2
+  output_dir: output/hybridruns_3

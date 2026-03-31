@@ -91,22 +91,22 @@ class Optimizer:
             "objective": [],
             "gradient_norm": [],
             "step_size": [],
-            "condition_number": [],   # CHANGED: store cond(A) at each iteration
+            "condition_number": [],
         }
 
         converged = False
         J = np.nan
         grad = np.zeros_like(x)
-
-        # CHANGED: initialize grad_norm so we can use a while-loop stopping rule.
         grad_norm = np.inf
 
-        # CHANGED: use a while loop so the optimization continues only while
-        # both conditions hold:
-        #   (1) k < max_iter
-        #   (2) grad_norm >= 1e-3
-        # This means the method stops when either max_iter is reached
-        # or the gradient norm drops below 1e-3.
+        # CHANGED: normalize user/YAML inputs so formatting/math does not fail
+        alpha = float(alpha)
+
+        # CHANGED: allow backtracking to be controlled from kwargs / YAML
+        use_backtracking = kwargs.get("use_backtracking", True)
+        if isinstance(use_backtracking, str):
+            use_backtracking = use_backtracking.strip().lower() in ("true", "1", "yes", "y", "on")
+
         k = 0
         while k < max_iter and grad_norm >= 1e-3:
 
@@ -126,7 +126,6 @@ class Optimizer:
             A = self.model.jacobian(u, x)
             g_u = self.model.dJ_du(u, x)
 
-            # CHANGED: compute condition number of the Jacobian for plotting
             try:
                 cond_A = float(np.linalg.cond(A))
             except Exception:
@@ -150,7 +149,8 @@ class Optimizer:
             # -------------------------------------------------
             # Step 4: Solve adjoint equation A^T p = g_u
             # Classical: returns vector p
-            # Quantum: returns a quantum state and scaling
+            # Quantum: may return a quantum state, a quantum state and scaling,
+            # or a quantum state with diagnostics
             # -------------------------------------------------
             adjoint_output = self.adjoint_solver(
                 A=A,
@@ -162,9 +162,19 @@ class Optimizer:
             )
 
             # Classical solver returns p
-            # Quantum solver may return (p_state, scale)
+            # Quantum solver may return:
+            #   - p_state
+            #   - (p_state, p_scale)
+            #   - (p_state, diagnostics)
             if isinstance(adjoint_output, tuple):
-                p_state, p_scale = adjoint_output
+                p_state = adjoint_output[0]
+
+                # If it is a numeric scale, use it.
+                # If it is diagnostics (e.g. a dict), ignore it here and use scale 1.
+                if len(adjoint_output) > 1 and np.isscalar(adjoint_output[1]):
+                    p_scale = float(adjoint_output[1])
+                else:
+                    p_scale = 1.0
             else:
                 p_state = adjoint_output
                 p_scale = 1.0
@@ -188,7 +198,7 @@ class Optimizer:
                     u=u,
                     x=x,
                     i=i,
-                    **kwargs
+                    **kwargs,
                 )
 
                 # reduced gradient component
@@ -196,9 +206,7 @@ class Optimizer:
 
             grad_norm = float(np.linalg.norm(grad))
 
-            # CHANGED: stop immediately if the gradient becomes non-finite.
-            # This prevents a corrupted quantum step from propagating and
-            # blowing up the control/state on the next update.
+            # stop immediately if the gradient becomes non-finite.
             if not np.isfinite(grad_norm) or not np.all(np.isfinite(grad)):
                 if verbose:
                     print("Stopping: non-finite gradient detected.")
@@ -207,12 +215,10 @@ class Optimizer:
             if store_history:
                 history["objective"].append(J)
                 history["gradient_norm"].append(grad_norm)
-                history["condition_number"].append(cond_A)   # CHANGED
+                history["condition_number"].append(cond_A)
 
             if verbose:
-                print(
-                    f"iter={k:04d} | J={J:.6e} | ||grad||={grad_norm:.12e}"
-                )
+                print(f"iter={k:04d} | J={J:.6e} | ||grad||={grad_norm:.12e}")
 
             # -------------------------------------------------
             # Step 6: Stopping test
@@ -223,8 +229,6 @@ class Optimizer:
                     print(f"Converged at iteration {k}.")
                 break
 
-            # CHANGED: also mark convergence if the while-loop threshold
-            # grad_norm < 1e-3 is reached.
             if grad_norm < 1e-3:
                 converged = True
                 if verbose:
@@ -235,46 +239,53 @@ class Optimizer:
             # Step 7: Step size / line search
             # -------------------------------------------------
             if self.line_search is None:
-                # CHANGED: replace the always-accept fixed step with a
-                # safeguarded backtracking step. This keeps the original
-                # "alpha as default step size" behavior, but now rejects
-                # steps that increase the objective too much.
-                step = alpha
-                c1 = kwargs.get("armijo_c", 1e-4)
-                tau = kwargs.get("backtracking_tau", 0.5)
-                min_step = kwargs.get("min_step", 1e-8)
-                max_backtracks = kwargs.get("max_backtracks", 20)
+                if use_backtracking:
+                    step = alpha
+                    c1 = float(kwargs.get("armijo_c", 1e-6))
+                    tau = float(kwargs.get("backtracking_tau", 0.5))
+                    min_step = float(kwargs.get("min_step", 1e-10))
+                    max_backtracks = int(kwargs.get("max_backtracks", 30))
 
-                # For steepest descent, grad^T (-grad) = -||grad||^2
-                directional_derivative = -grad_norm ** 2
+                    # For steepest descent, grad^T (-grad) = -||grad||^2
+                    directional_derivative = -grad_norm ** 2
 
-                accepted = False
-                for _ in range(max_backtracks):
-                    x_trial = x - step * grad
-                    u_trial = self.state_solver(model=self.model, x=x_trial, **kwargs)
-                    J_trial = float(self.model.objective(u_trial, x_trial))
-                    
+                    accepted = False
+                    for _ in range(max_backtracks):
+                        x_trial = x - step * grad
+                        u_trial = self.state_solver(model=self.model, x=x_trial, **kwargs)
+                        J_trial = float(self.model.objective(u_trial, x_trial))
+
+                        if verbose:
+                            print(f"  backtrack step={step:.3e}")
+                            print(f"  trial objective={J_trial:.12e}")
+
+                        if np.isfinite(J_trial) and J_trial <= J + c1 * step * directional_derivative:
+                            accepted = True
+                            break
+
+                        step *= tau
+
+                        if step < min_step:
+                            break
+
+                    if not accepted:
+                        # Keep optimization alive, but skip the unstable update.
+                        step = 0.0
+
+                        if store_history:
+                            history["step_size"].append(step)
+
+                        if verbose:
+                            print("Backtracking failed to find a stable step. Skipping update and continuing.")
+
+                        k += 1
+                        continue
+                else:
+                    # CHANGED: plain fixed-step gradient descent when backtracking is disabled
+                    step = alpha
                     if verbose:
-                        print(f"  backtrack step={step:.3e}")
-                        print(f"  trial objective={J_trial:.12e}")
+                        print(f"  fixed step={step:.3e}")
 
-                    if np.isfinite(J_trial) and J_trial <= J + c1 * step * directional_derivative:
-                        accepted = True
-                        break
-
-                    step *= tau
-
-                    if step < min_step:
-                        break
-
-                if not accepted:
-                    # CHANGED: reject the unstable update instead of taking
-                    # a bad full step that can cause the optimization to blow up.
-                    if store_history:
-                        history["step_size"].append(0.0)
-                    if verbose:
-                        print("Stopping: backtracking failed to find a stable step.")
-                    break
             else:
                 step = self.line_search(
                     model=self.model,
@@ -294,7 +305,6 @@ class Optimizer:
             # -------------------------------------------------
             x = x - step * grad
 
-            # CHANGED: manual iteration counter for the while loop.
             k += 1
 
         return OptimizationResult(

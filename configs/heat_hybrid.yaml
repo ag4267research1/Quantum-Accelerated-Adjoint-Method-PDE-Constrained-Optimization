@@ -5,9 +5,17 @@ model:
   nx: 1
 
 optimizer:
-  max_iter: 10000
+  max_iter: 2000
+  alpha: 1e-3
+  use_backtracking: false
+  armijo_c: 1e-6
+  backtracking_tau: 0.5
+  min_step: 1e-10
+  max_backtracks: 30
+
 solver:
   mode: hybrid
+
 quantum:
   shots: 8192
   spectral_points: 16
@@ -15,10 +23,10 @@ quantum:
   use_preconditioning: false
 
 scaling:
-  sizes: [4]
-  iterations: 10000
+  sizes: [16]
+  iterations: 1
 
 plots:
   show_solution: true
   show_scaling: false
-  output_dir: output/hybridruns_2
+  output_dir: output/hybridruns_6
