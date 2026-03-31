@@ -1,7 +1,7 @@
 experiment: heat
 
 model:
-  n: 16
+  n: 4
   nx: 1
 
 optimizer:
@@ -14,7 +14,7 @@ optimizer:
   max_backtracks: 30
 
 solver:
-  mode: hybrid
+  mode: classical
 
 quantum:
   shots: 8192
