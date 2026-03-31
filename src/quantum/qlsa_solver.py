@@ -294,23 +294,6 @@ def _vector_to_state_and_norm(vec):
     return Statevector(vec_pad), float(vec_norm)
 
 
-def _classical_adjoint_norm(C_u_T, J_u_T):
-    """
-    Compute ||p|| from the original adjoint system
-
-        C_u^T p = J_u^T
-
-    using a classical solve. This provides the scale factor needed by
-    the optimizer while the overlap itself is estimated through HHL + swap test.
-    """
-    try:
-        p = np.linalg.solve(C_u_T, J_u_T)
-    except np.linalg.LinAlgError:
-        p = np.linalg.lstsq(C_u_T, J_u_T, rcond=None)[0]
-
-    return float(np.linalg.norm(p))
-
-
 def _build_embedded_test_vector(handle, right):
     """
     Build the swap-test vector in the same padded space as the HHL solve.
@@ -418,8 +401,8 @@ def adjoint_solver(
 
     cond_raw = np.linalg.cond(C_u_T)
 
-    # compute the original adjoint norm once, classically
-    p_scale = _classical_adjoint_norm(C_u_T, J_u_T)
+
+    p_scale = 1.0
 
     # --------------------------------------------------
     # Zero-RHS shortcut
