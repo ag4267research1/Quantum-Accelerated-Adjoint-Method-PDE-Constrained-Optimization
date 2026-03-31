@@ -1,11 +1,11 @@
 experiment: heat
 
 model:
-  n: 4
+  n: 16
   nx: 1
 
 optimizer:
-  max_iter: 2000
+  max_iter: 20
   alpha: 1e-3
   use_backtracking: false
   armijo_c: 1e-6
@@ -14,7 +14,7 @@ optimizer:
   max_backtracks: 30
 
 solver:
-  mode: classical
+  mode: hybrid
 
 quantum:
   shots: 8192
