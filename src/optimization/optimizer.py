@@ -99,13 +99,19 @@ class Optimizer:
         grad = np.zeros_like(x)
         grad_norm = np.inf
 
-        # CHANGED: normalize user/YAML inputs so formatting/math does not fail
+        # normalize user/YAML inputs so formatting/math does not fail
         alpha = float(alpha)
 
-        # CHANGED: allow backtracking to be controlled from kwargs / YAML
+        # allow backtracking to be controlled from kwargs / YAML
         use_backtracking = kwargs.get("use_backtracking", True)
         if isinstance(use_backtracking, str):
             use_backtracking = use_backtracking.strip().lower() in ("true", "1", "yes", "y", "on")
+
+        # CHANGED: surrogate controls were missing
+        use_quantum_surrogate = kwargs.get("use_quantum_surrogate", False)
+        if isinstance(use_quantum_surrogate, str):
+            use_quantum_surrogate = use_quantum_surrogate.strip().lower() in ("true", "1", "yes", "y", "on")
+        quantum_beta = float(kwargs.get("quantum_beta", 0.05))
 
         k = 0
         while k < max_iter and grad_norm >= 1e-3:
@@ -133,8 +139,6 @@ class Optimizer:
 
             # -------------------------------------------------
             # Step 3b: Control gradient term
-            # Classical default: exact / analytic dJ_dx
-            # Quantum later: spectral gradient estimator
             # -------------------------------------------------
             if self.control_gradient_estimator is None:
                 g_x = self.model.dJ_dx(u, x)
@@ -148,9 +152,6 @@ class Optimizer:
 
             # -------------------------------------------------
             # Step 4: Solve adjoint equation A^T p = g_u
-            # Classical: returns vector p
-            # Quantum: may return a quantum state, a quantum state and scaling,
-            # or a quantum state with diagnostics
             # -------------------------------------------------
             adjoint_output = self.adjoint_solver(
                 A=A,
@@ -161,16 +162,9 @@ class Optimizer:
                 **kwargs,
             )
 
-            # Classical solver returns p
-            # Quantum solver may return:
-            #   - p_state
-            #   - (p_state, p_scale)
-            #   - (p_state, diagnostics)
             if isinstance(adjoint_output, tuple):
                 p_state = adjoint_output[0]
 
-                # If it is a numeric scale, use it.
-                # If it is diagnostics (e.g. a dict), ignore it here and use scale 1.
                 if len(adjoint_output) > 1 and np.isscalar(adjoint_output[1]):
                     p_scale = float(adjoint_output[1])
                 else:
@@ -181,17 +175,14 @@ class Optimizer:
 
             # -------------------------------------------------
             # Step 5: Assemble reduced gradient
-            # grad_i = dJ/dx_i - <p, dc/dx_i>
             # -------------------------------------------------
-            grad = np.zeros_like(x, dtype=float)
+            z_vec = np.zeros_like(x, dtype=float)
 
             for i in range(len(x)):
 
-                # derivative of constraint wrt control variable
                 w_i = self.model.dc_dx_i(u, x, i)
 
-                # compute <p , dc/dx_i>
-                z_i = self.inner_product(
+                z_vec[i] = self.inner_product(
                     left=p_state,
                     right=w_i,
                     model=self.model,
@@ -201,12 +192,41 @@ class Optimizer:
                     **kwargs,
                 )
 
-                # reduced gradient component
-                grad[i] = g_x[i] - p_scale * z_i
+            if use_quantum_surrogate:
+                grad_minus = g_x - quantum_beta * p_scale * z_vec
+                grad_plus = g_x + quantum_beta * p_scale * z_vec
 
+                x_trial_minus = x - alpha * grad_minus
+                u_trial_minus = self.state_solver(model=self.model, x=x_trial_minus, **kwargs)
+                J_trial_minus = float(self.model.objective(u_trial_minus, x_trial_minus))
+
+                x_trial_plus = x - alpha * grad_plus
+                u_trial_plus = self.state_solver(model=self.model, x=x_trial_plus, **kwargs)
+                J_trial_plus = float(self.model.objective(u_trial_plus, x_trial_plus))
+
+                if np.isfinite(J_trial_minus) and (
+                    not np.isfinite(J_trial_plus) or J_trial_minus <= J_trial_plus
+                ):
+                    grad = grad_minus
+                    chosen_direction = "-"
+                    chosen_trial_objective = J_trial_minus
+                else:
+                    grad = grad_plus
+                    chosen_direction = "+"
+                    chosen_trial_objective = J_trial_plus
+
+                if verbose:
+                    print(f"  surrogate trial (-): {J_trial_minus:.12e}")
+                    print(f"  surrogate trial (+): {J_trial_plus:.12e}")
+                    print(f"  chosen quantum direction: {chosen_direction}")
+                    print(f"  chosen surrogate objective: {chosen_trial_objective:.12e}")
+
+            else:
+                grad = g_x - p_scale * z_vec
+
+            # CHANGED: these checks/computations must happen after grad is built
             grad_norm = float(np.linalg.norm(grad))
 
-            # stop immediately if the gradient becomes non-finite.
             if not np.isfinite(grad_norm) or not np.all(np.isfinite(grad)):
                 if verbose:
                     print("Stopping: non-finite gradient detected.")
@@ -246,7 +266,6 @@ class Optimizer:
                     min_step = float(kwargs.get("min_step", 1e-10))
                     max_backtracks = int(kwargs.get("max_backtracks", 30))
 
-                    # For steepest descent, grad^T (-grad) = -||grad||^2
                     directional_derivative = -grad_norm ** 2
 
                     accepted = False
@@ -269,7 +288,6 @@ class Optimizer:
                             break
 
                     if not accepted:
-                        # Keep optimization alive, but skip the unstable update.
                         step = 0.0
 
                         if store_history:
@@ -281,7 +299,7 @@ class Optimizer:
                         k += 1
                         continue
                 else:
-                    # CHANGED: plain fixed-step gradient descent when backtracking is disabled
+                    # fixed-step gradient descent when backtracking is disabled
                     step = alpha
                     if verbose:
                         print(f"  fixed step={step:.3e}")

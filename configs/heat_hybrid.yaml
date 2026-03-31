@@ -8,10 +8,14 @@ optimizer:
   max_iter: 20
   alpha: 1e-3
   use_backtracking: false
+  optimizer:
+  use_quantum_surrogate: true
+  quantum_beta: 0.05
   armijo_c: 1e-6
   backtracking_tau: 0.5
   min_step: 1e-10
   max_backtracks: 30
+
 
 solver:
   mode: hybrid

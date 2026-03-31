@@ -14,8 +14,6 @@ from src.classical.classical_solver import (
 )
 
 # hybrid quantum components
-# from src.quantum.qlsa_solver import adjoint_solver as qlsa_solver
-# from src.quantum.swap_test import inner_product as swap_test_inner_product
 from src.quantum.qlsa_solver import (
     adjoint_solver as qlsa_solver,
     inner_product as swap_test_inner_product,
@@ -79,7 +77,7 @@ def get_solver_components(mode):
         return (
             qlsa_solver,
             swap_test_inner_product,
-            None
+            hybrid_gradient_estimator  # CHANGED: this was None
         )
 
     else:
@@ -170,7 +168,7 @@ def plot_solution(config):
 
     optimize_kwargs = {}
 
-    # CHANGED: forward optimizer config to optimizer.optimize(...)
+    # forward optimizer config to optimizer.optimize(...)
     optimizer_cfg = config.get("optimizer", {})
     optimize_kwargs["alpha"] = optimizer_cfg.get("alpha", 1e-3)
     optimize_kwargs["use_backtracking"] = optimizer_cfg.get("use_backtracking", True)
@@ -179,6 +177,10 @@ def plot_solution(config):
     optimize_kwargs["min_step"] = optimizer_cfg.get("min_step", 1e-10)
     optimize_kwargs["max_backtracks"] = optimizer_cfg.get("max_backtracks", 30)
 
+    # CHANGED: forward surrogate controls too
+    optimize_kwargs["use_quantum_surrogate"] = optimizer_cfg.get("use_quantum_surrogate", False)
+    optimize_kwargs["quantum_beta"] = optimizer_cfg.get("quantum_beta", 0.05)
+
     if mode == "hybrid":
         quantum_cfg = config.get("quantum", {})
         optimize_kwargs["shots"] = quantum_cfg.get("shots", 64)
@@ -186,14 +188,14 @@ def plot_solution(config):
         optimize_kwargs["N"] = quantum_cfg.get("spectral_points", 16)
         optimize_kwargs["use_preconditioning"] = quantum_cfg.get("use_preconditioning", True)
 
-    # CHANGED: define one output directory and save all plots there
+    # define one output directory and save all plots there
     plots_cfg = config.get("plots", {})
     output_dir = plots_cfg.get("output_dir", "output")
 
     # run optimization
     result = optimizer.optimize(x0, max_iter=max_iter, **optimize_kwargs)
 
-    # CHANGED: save history plots in the output directory
+    # save history plots in the output directory
     save_history_plots(result.history, output_dir=output_dir, mode=mode)
 
     # optimizer returns the optimal control
@@ -258,7 +260,7 @@ def scaling_experiment(config):
 
         optimize_kwargs = {}
 
-        # CHANGED: forward optimizer config to optimizer.optimize(...)
+        # forward optimizer config to optimizer.optimize(...)
         optimizer_cfg = config.get("optimizer", {})
         optimize_kwargs["alpha"] = optimizer_cfg.get("alpha", 1e-3)
         optimize_kwargs["use_backtracking"] = optimizer_cfg.get("use_backtracking", True)
@@ -266,6 +268,10 @@ def scaling_experiment(config):
         optimize_kwargs["backtracking_tau"] = optimizer_cfg.get("backtracking_tau", 0.5)
         optimize_kwargs["min_step"] = optimizer_cfg.get("min_step", 1e-10)
         optimize_kwargs["max_backtracks"] = optimizer_cfg.get("max_backtracks", 30)
+
+        # CHANGED: forward surrogate controls too
+        optimize_kwargs["use_quantum_surrogate"] = optimizer_cfg.get("use_quantum_surrogate", False)
+        optimize_kwargs["quantum_beta"] = optimizer_cfg.get("quantum_beta", 0.05)
 
         if mode == "hybrid":
             quantum_cfg = config.get("quantum", {})

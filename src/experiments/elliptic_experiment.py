@@ -77,6 +77,10 @@ def _build_optimize_kwargs(config, mode):
     optimize_kwargs["min_step"] = optimizer_cfg.get("min_step", 1e-10)
     optimize_kwargs["max_backtracks"] = optimizer_cfg.get("max_backtracks", 30)
 
+    # CHANGED: forward surrogate controls too
+    optimize_kwargs["use_quantum_surrogate"] = optimizer_cfg.get("use_quantum_surrogate", False)
+    optimize_kwargs["quantum_beta"] = optimizer_cfg.get("quantum_beta", 0.05)
+
     if mode == "hybrid":
         quantum_cfg = config.get("quantum", {})
         optimize_kwargs["shots"] = quantum_cfg.get("shots", 64)
@@ -204,7 +208,7 @@ def run_experiment(config):
             # state solve is still classical in the hybrid workflow
             from src.classical.classical_solver import state_solver
 
-            # CHANGED: use the merged single-file quantum API already imported above
+            # use the merged single-file quantum API already imported above
             adjoint_solver = qlsa_solver
             inner_product = swap_test_inner_product
 
