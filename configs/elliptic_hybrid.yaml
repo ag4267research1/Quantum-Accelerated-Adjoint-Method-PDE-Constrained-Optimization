@@ -6,7 +6,7 @@ model:
   nx: 1
 
 optimizer:
-  max_iter: 20000
+  max_iter: 2000
   alpha: 1e-3
   use_backtracking: false
   use_quantum_surrogate: true
