@@ -113,6 +113,7 @@ def save_history_plots(history, output_dir, mode):
     plt.xlabel("Iteration")
     plt.ylabel("Gradient Norm")
     plt.title(f"Gradient Norm vs Iteration ({mode})")
+    plt.yscale("log")
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, f"{mode}_gradient_vs_iteration.png"))
     plt.close()

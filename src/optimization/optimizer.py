@@ -48,7 +48,7 @@ class Optimizer:
         self,
         x0: Array,
         max_iter: int = 100,
-        tol: float = 1e-6,
+        tol: float = 1e-8,
         alpha: float = 1e-3,
         store_history: bool = True,
         verbose: bool = True,
@@ -107,14 +107,8 @@ class Optimizer:
         if isinstance(use_backtracking, str):
             use_backtracking = use_backtracking.strip().lower() in ("true", "1", "yes", "y", "on")
 
-        # CHANGED: surrogate controls were missing
-        use_quantum_surrogate = kwargs.get("use_quantum_surrogate", False)
-        if isinstance(use_quantum_surrogate, str):
-            use_quantum_surrogate = use_quantum_surrogate.strip().lower() in ("true", "1", "yes", "y", "on")
-        quantum_beta = float(kwargs.get("quantum_beta", 0.05))
-
         k = 0
-        while k < max_iter and grad_norm >= 1e-3:
+        while k < max_iter and grad_norm >= 1e-5:
 
             # -------------------------------------------------
             # Step 1: Solve state equation c(u,x)=0
@@ -192,39 +186,9 @@ class Optimizer:
                     **kwargs,
                 )
 
-            if use_quantum_surrogate:
-                grad_minus = g_x - quantum_beta * p_scale * z_vec
-                grad_plus = g_x + quantum_beta * p_scale * z_vec
+            # CHANGED: use the standard reduced-gradient formula directly
+            grad = g_x - p_scale * z_vec
 
-                x_trial_minus = x - alpha * grad_minus
-                u_trial_minus = self.state_solver(model=self.model, x=x_trial_minus, **kwargs)
-                J_trial_minus = float(self.model.objective(u_trial_minus, x_trial_minus))
-
-                x_trial_plus = x - alpha * grad_plus
-                u_trial_plus = self.state_solver(model=self.model, x=x_trial_plus, **kwargs)
-                J_trial_plus = float(self.model.objective(u_trial_plus, x_trial_plus))
-
-                if np.isfinite(J_trial_minus) and (
-                    not np.isfinite(J_trial_plus) or J_trial_minus <= J_trial_plus
-                ):
-                    grad = grad_minus
-                    chosen_direction = "-"
-                    chosen_trial_objective = J_trial_minus
-                else:
-                    grad = grad_plus
-                    chosen_direction = "+"
-                    chosen_trial_objective = J_trial_plus
-
-                if verbose:
-                    print(f"  surrogate trial (-): {J_trial_minus:.12e}")
-                    print(f"  surrogate trial (+): {J_trial_plus:.12e}")
-                    print(f"  chosen quantum direction: {chosen_direction}")
-                    print(f"  chosen surrogate objective: {chosen_trial_objective:.12e}")
-
-            else:
-                grad = g_x - p_scale * z_vec
-
-            # CHANGED: these checks/computations must happen after grad is built
             grad_norm = float(np.linalg.norm(grad))
 
             if not np.isfinite(grad_norm) or not np.all(np.isfinite(grad)):
@@ -249,10 +213,10 @@ class Optimizer:
                     print(f"Converged at iteration {k}.")
                 break
 
-            if grad_norm < 1e-3:
+            if grad_norm < 1e-5:
                 converged = True
                 if verbose:
-                    print(f"Converged at iteration {k} (gradient norm below 1e-3).")
+                    print(f"Converged at iteration {k} (gradient norm below 1e-5).")
                 break
 
             # -------------------------------------------------

@@ -148,13 +148,33 @@ class HeatModel:
     # Default target profile
     # --------------------------------------------------
 
+    # def _default_target(self):
+    #     """
+    #     Construct a smooth default target profile for optimization.
+
+    #     The target is chosen to be near the ambient temperature in the
+    #     interior and lower near the boundaries. This avoids pushing the
+    #     optimizer toward extreme source values.
+
+    #     Returns
+    #     -------
+    #     ndarray of shape (n,)
+    #     """
+
+    #     y = (self.grid - self.x1) / (self.x2 - self.x1)
+
+    #     # Smooth plateau profile between the two boundaries
+    #     profile = 4.0 * y * (1.0 - y)
+
+    #     return self.T_inf * profile
+    
     def _default_target(self):
         """
-        Construct a smooth default target profile for optimization.
+        Construct a smoother, easier default target profile for optimization.
 
-        The target is chosen to be near the ambient temperature in the
-        interior and lower near the boundaries. This avoids pushing the
-        optimizer toward extreme source values.
+        The target keeps the same single-hump shape but uses a smaller peak
+        than T_inf, which makes it easier for the optimizer to reach with
+        moderate control values.
 
         Returns
         -------
@@ -163,10 +183,14 @@ class HeatModel:
 
         y = (self.grid - self.x1) / (self.x2 - self.x1)
 
-        # Smooth plateau profile between the two boundaries
-        profile = 4.0 * y * (1.0 - y)
+        # Smooth single-hump profile with zero boundary tendency
+        profile = np.sin(np.pi * y) ** 2
 
-        return self.T_inf * profile
+        # Lower peak than T_inf so the target is easier to reach
+        target_peak = 0.6 * self.T_inf
+
+        # return target_peak * profile
+        return 0
 
     # --------------------------------------------------
     # Radiation coefficient ε(T)

@@ -2,18 +2,15 @@ experiment: heat
 
 model:
   n: 16
-  nx: 1
+  nx: 2
 
 optimizer:
-  max_iter: 20
-  alpha: 1e-3
-  use_backtracking: false
-  optimizer:
-  use_quantum_surrogate: true
-  quantum_beta: 0.05
+  max_iter: 400
+  alpha: 1
+  use_backtracking: true
   armijo_c: 1e-6
   backtracking_tau: 0.5
-  min_step: 1e-10
+  min_step: 1e-4
   max_backtracks: 30
 
 
@@ -33,4 +30,4 @@ scaling:
 plots:
   show_solution: true
   show_scaling: false
-  output_dir: output/hybridruns_6
+  output_dir: output/hybrid/heat/solve1

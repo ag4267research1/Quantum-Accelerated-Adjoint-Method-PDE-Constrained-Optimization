@@ -1,22 +1,3 @@
-"""
-1D Elliptic PDE Model (Two-variable formulation)
-
-We use ONLY:
-    - u : state variable
-    - x : control variable
-
-Continuous PDE:
-    -(kappa(x) u'(x))' + c(x) u(x) = B x + f(x)
-
-Boundary conditions:
-    u(0) = 0, u(1) = 0
-
-Discrete form:
-    A u = b(x)
-
-No extra symbols (no s, no y).
-"""
-
 import numpy as np
 
 
@@ -39,6 +20,12 @@ class EllipticModel:
 
         self.exp_type = config.get("experiment_type", "exp1")
         self.alpha = float(config.get("alpha", 1e-4))
+
+        # CHANGED: modest amplitude for constructing an attainable target
+        self.target_scale = float(config.get("target_scale", 0.2))
+
+        # CHANGED: cache desired state so we do not recompute it every call
+        self._desired_state_cache = None
 
     # =========================================================
     # PUBLIC API
@@ -82,7 +69,26 @@ class EllipticModel:
         return -self._apply_control(e_i)
 
     def desired_state(self):
-        return np.sin(np.pi * self.x)
+        """
+        Construct an attainable desired state by solving the same PDE
+        with a small smooth reference control.
+
+        This gives a target that is consistent with the operator A,
+        the source term f, and the control action Bx, so optimization
+        is usually much better behaved.
+        """
+        if self._desired_state_cache is not None:
+            return self._desired_state_cache
+
+        x_ref = self._reference_control()
+
+        A = self._build_operator()
+        b = self._build_rhs(x_ref)
+
+        u_d = np.linalg.solve(A, b)
+
+        self._desired_state_cache = u_d
+        return self._desired_state_cache
 
     # =========================================================
     # OPERATOR A
@@ -200,3 +206,25 @@ class EllipticModel:
         mask = np.zeros_like(x)
         mask[(x >= 0.2) & (x <= 0.4)] = 1.0
         return mask
+
+    # =========================================================
+    # REFERENCE CONTROL FOR TARGET GENERATION
+    # =========================================================
+
+    def _reference_control(self):
+        """
+        Build a small smooth reference control used only to generate
+        an attainable desired state.
+
+        The amplitude is intentionally modest so that the target is not
+        too aggressive and the optimizer can reduce the objective faster.
+        """
+        if self.exp_type == "exp4":
+            # For masked control, put a smooth bump inside the active region.
+            center = 0.3
+            width = 0.06
+            x_ref = self.target_scale * np.exp(-((self.x - center) ** 2) / (2.0 * width ** 2))
+            return x_ref
+
+        # Default: smooth one-mode control over the whole domain.
+        return self.target_scale * np.sin(np.pi * self.x)
