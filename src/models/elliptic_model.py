@@ -88,7 +88,7 @@ class EllipticModel:
         u_d = np.linalg.solve(A, b)
 
         self._desired_state_cache = u_d
-        return self._desired_state_cache
+        return 90*self._desired_state_cache
 
     # =========================================================
     # OPERATOR A
@@ -214,10 +214,6 @@ class EllipticModel:
     def _reference_control(self):
         """
         Build a small smooth reference control used only to generate
-        an attainable desired state.
-
-        The amplitude is intentionally modest so that the target is not
-        too aggressive and the optimizer can reduce the objective faster.
         """
         if self.exp_type == "exp4":
             # For masked control, put a smooth bump inside the active region.

@@ -216,7 +216,7 @@ class Optimizer:
             if grad_norm < 1e-5:
                 converged = True
                 if verbose:
-                    print(f"Converged at iteration {k} (gradient norm below 1e-5).")
+                    print(f"Converged at iteration {k} (gradient norm below 1e-4).")
                 break
 
             # -------------------------------------------------

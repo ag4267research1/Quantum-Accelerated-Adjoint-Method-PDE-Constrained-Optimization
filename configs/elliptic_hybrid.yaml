@@ -1,32 +1,32 @@
 experiment: elliptic
 
-experiment_type: exp4
+experiment_type: exp5
 
 model:
-  nx: 4
+  nx: 2
 
 optimizer:
   max_iter: 400
-  alpha: 450
+  alpha: 70
   use_backtracking: true
   armijo_c: 1e-6
   backtracking_tau: 0.5
-  min_step: 1e-4
-  max_backtracks: 30
+  min_step: 1e-10
+  max_backtracks: 100
 
 solver:
-  mode: classical
+  mode: hybrid
 
 quantum:
   shots: 8192
   spectral_points: 16
   delta: 0.001
-  use_preconditioning: flase
+  use_preconditioning: false
 
 scaling:
-  sizes: [16,32,64]
+  sizes: [8,16]
 
 plots:
   show_solution: true
   show_scaling: false
-  output_dir: output/classical/elliptic/exp4
+  output_dir: output/hybrid/precision_1e_5/elliptic/No_Spectral/exp5
