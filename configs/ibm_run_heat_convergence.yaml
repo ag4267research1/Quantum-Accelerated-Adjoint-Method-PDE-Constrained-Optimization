@@ -21,7 +21,7 @@ quantum:
   spectral_points: 4
   delta: 0.001
 
-  backend_mode: ibm
+  backend_mode: aer
   ibm_backend_name: null
   ibm_channel: null
   ibm_token: null
