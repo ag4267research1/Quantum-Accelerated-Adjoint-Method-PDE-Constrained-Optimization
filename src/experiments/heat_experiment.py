@@ -77,7 +77,7 @@ def get_solver_components(mode):
         return (
             qlsa_solver,
             swap_test_inner_product,
-            hybrid_gradient_estimator  # CHANGED: this was None
+            hybrid_gradient_estimator
         )
 
     else:
@@ -178,16 +178,26 @@ def plot_solution(config):
     optimize_kwargs["min_step"] = optimizer_cfg.get("min_step", 1e-10)
     optimize_kwargs["max_backtracks"] = optimizer_cfg.get("max_backtracks", 30)
 
-    # CHANGED: forward surrogate controls too
-    optimize_kwargs["use_quantum_surrogate"] = optimizer_cfg.get("use_quantum_surrogate", False)
-    optimize_kwargs["quantum_beta"] = optimizer_cfg.get("quantum_beta", 0.05)
+    # CHANGED: no longer used by the current optimizer
+    # optimize_kwargs["use_quantum_surrogate"] = optimizer_cfg.get("use_quantum_surrogate", False)
+    # optimize_kwargs["quantum_beta"] = optimizer_cfg.get("quantum_beta", 0.05)
 
     if mode == "hybrid":
         quantum_cfg = config.get("quantum", {})
         optimize_kwargs["shots"] = quantum_cfg.get("shots", 64)
         optimize_kwargs["delta"] = quantum_cfg.get("delta", 1e-3)
         optimize_kwargs["N"] = quantum_cfg.get("spectral_points", 16)
-        optimize_kwargs["use_preconditioning"] = quantum_cfg.get("use_preconditioning", True)
+
+        # CHANGED: preconditioning removed from qlsa_solver
+        # optimize_kwargs["use_preconditioning"] = quantum_cfg.get("use_preconditioning", True)
+
+        # CHANGED: backend forwarding for Aer / IBM
+        optimize_kwargs["backend_mode"] = quantum_cfg.get("backend_mode", "aer")
+        optimize_kwargs["ibm_backend_name"] = quantum_cfg.get("ibm_backend_name", None)
+        optimize_kwargs["ibm_channel"] = quantum_cfg.get("ibm_channel", None)
+        optimize_kwargs["ibm_token"] = quantum_cfg.get("ibm_token", None)
+        optimize_kwargs["ibm_instance"] = quantum_cfg.get("ibm_instance", None)
+        optimize_kwargs["ibm_use_least_busy"] = quantum_cfg.get("ibm_use_least_busy", False)
 
     # define one output directory and save all plots there
     plots_cfg = config.get("plots", {})
@@ -270,16 +280,26 @@ def scaling_experiment(config):
         optimize_kwargs["min_step"] = optimizer_cfg.get("min_step", 1e-10)
         optimize_kwargs["max_backtracks"] = optimizer_cfg.get("max_backtracks", 30)
 
-        # CHANGED: forward surrogate controls too
-        optimize_kwargs["use_quantum_surrogate"] = optimizer_cfg.get("use_quantum_surrogate", False)
-        optimize_kwargs["quantum_beta"] = optimizer_cfg.get("quantum_beta", 0.05)
+        # CHANGED: no longer used by the current optimizer
+        # optimize_kwargs["use_quantum_surrogate"] = optimizer_cfg.get("use_quantum_surrogate", False)
+        # optimize_kwargs["quantum_beta"] = optimizer_cfg.get("quantum_beta", 0.05)
 
         if mode == "hybrid":
             quantum_cfg = config.get("quantum", {})
             optimize_kwargs["shots"] = quantum_cfg.get("shots", 64)
             optimize_kwargs["delta"] = quantum_cfg.get("delta", 1e-3)
             optimize_kwargs["N"] = quantum_cfg.get("spectral_points", 16)
-            optimize_kwargs["use_preconditioning"] = quantum_cfg.get("use_preconditioning", True)
+
+            # CHANGED: preconditioning removed from qlsa_solver
+            # optimize_kwargs["use_preconditioning"] = quantum_cfg.get("use_preconditioning", True)
+
+            # CHANGED: backend forwarding for Aer / IBM
+            optimize_kwargs["backend_mode"] = quantum_cfg.get("backend_mode", "aer")
+            optimize_kwargs["ibm_backend_name"] = quantum_cfg.get("ibm_backend_name", None)
+            optimize_kwargs["ibm_channel"] = quantum_cfg.get("ibm_channel", None)
+            optimize_kwargs["ibm_token"] = quantum_cfg.get("ibm_token", None)
+            optimize_kwargs["ibm_instance"] = quantum_cfg.get("ibm_instance", None)
+            optimize_kwargs["ibm_use_least_busy"] = quantum_cfg.get("ibm_use_least_busy", False)
 
         start = time.time()
 

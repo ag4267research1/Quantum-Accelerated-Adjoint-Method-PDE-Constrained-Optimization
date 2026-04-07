@@ -1,0 +1,138 @@
+iter=0005 | J=4.786495e+03 | ||grad||=3.143832084877e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786493052864e+03
+                                                                                                                                       │iter=0006 | J=4.786493e+03 | ||grad||=2.709398297733e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786491458031e+03
+                                                                                                                                       │iter=0007 | J=4.786491e+03 | ||grad||=3.600114477542e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786489277044e+03
+                                                                                                                                       │iter=0008 | J=4.786489e+03 | ||grad||=1.033898715696e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786488717193e+03
+                                                                                                                                       │iter=0009 | J=4.786489e+03 | ||grad||=3.873164882367e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786486364941e+03
+                                                                                                                                       │iter=0010 | J=4.786486e+03 | ||grad||=2.140187274711e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786485794958e+03
+                                                                                                                                       │iter=0011 | J=4.786486e+03 | ||grad||=3.538374422562e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786483669393e+03
+                                                                                                                                       │iter=0012 | J=4.786484e+03 | ||grad||=4.565703195854e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786481194096e+03
+                                                                                                                                       │iter=0013 | J=4.786481e+03 | ||grad||=3.271263959388e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786479227875e+03
+                                                                                                                                       │iter=0014 | J=4.786479e+03 | ||grad||=5.851515077583e-03
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786479086220e+03
+                                                                                                                                       │iter=0015 | J=4.786479e+03 | ||grad||=3.607070460625e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786477134622e+03
+                                                                                                                                       │iter=0016 | J=4.786477e+03 | ||grad||=3.646770041991e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786474977257e+03
+                                                                                                                                       │iter=0017 | J=4.786475e+03 | ||grad||=2.051229729953e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786473735637e+03
+                                                                                                                                       │iter=0018 | J=4.786474e+03 | ||grad||=2.504472846250e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786472384678e+03
+                                                                                                                                       │iter=0019 | J=4.786472e+03 | ||grad||=1.281265499881e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786471696417e+03
+                                                                                                                                       │iter=0020 | J=4.786472e+03 | ||grad||=2.245684319575e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786470591494e+03
+                                                                                                                                       │iter=0021 | J=4.786471e+03 | ||grad||=3.205446950018e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786468655436e+03
+                                                                                                                                       │iter=0022 | J=4.786469e+03 | ||grad||=3.141763892963e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786466779479e+03
+                                                                                                                                       │iter=0023 | J=4.786467e+03 | ||grad||=3.147545738482e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786464882305e+03
+                                                                                                                                       │iter=0024 | J=4.786465e+03 | ||grad||=3.177904442292e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786462963013e+03
+                                                                                                                                       │iter=0025 | J=4.786463e+03 | ||grad||=1.310236090402e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786462173316e+03
+                                                                                                                                       │iter=0026 | J=4.786462e+03 | ||grad||=3.285994494117e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786460190517e+03
+                                                                                                                                       │iter=0027 | J=4.786460e+03 | ||grad||=1.552501257611e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786459804279e+03
+                                                                                                                                       │iter=0028 | J=4.786460e+03 | ||grad||=3.725163778859e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786457557528e+03
+
+
+
+                                                                                                                                         │iter=0096 | J=4.786340e+03 | ||grad||=2.985903683759e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786337930055e+03
+                                                                                                                                       │iter=0097 | J=4.786338e+03 | ||grad||=3.518826351057e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786335956200e+03
+                                                                                                                                       │iter=0098 | J=4.786336e+03 | ||grad||=3.991031272085e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786333654656e+03
+                                                                                                                                       │iter=0099 | J=4.786334e+03 | ||grad||=4.677180291485e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786330937300e+03
+                                                                                                                                       │iter=0100 | J=4.786331e+03 | ||grad||=3.401654063664e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786329097845e+03
+                                                                                                                                       │iter=0101 | J=4.786329e+03 | ||grad||=2.302116263712e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786327823741e+03
+                                                                                                                                       │iter=0102 | J=4.786328e+03 | ||grad||=4.044628228363e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786325481445e+03
+                                                                                                                                       │iter=0103 | J=4.786325e+03 | ||grad||=3.882483975431e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786323229048e+03
+                                                                                                                                       │iter=0104 | J=4.786323e+03 | ||grad||=4.267701136094e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786320795145e+03
+                                                                                                                                       │iter=0105 | J=4.786321e+03 | ||grad||=2.853716423617e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786319141187e+03
+                                                                                                                                       │iter=0106 | J=4.786319e+03 | ||grad||=2.587540221909e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786317645457e+03
+                                                                                                                                       │iter=0107 | J=4.786318e+03 | ||grad||=4.665194243908e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786314946005e+03
+                                                                                                                                       │iter=0108 | J=4.786315e+03 | ||grad||=4.438578943314e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786312379140e+03
+                                                                                                                                       │iter=0109 | J=4.786312e+03 | ||grad||=2.633926312556e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786310922934e+03
+                                                                                                                                       │iter=0110 | J=4.786311e+03 | ||grad||=3.165817857099e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786309132123e+03
+                                                                                                                                       │iter=0111 | J=4.786309e+03 | ||grad||=3.079288146565e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786307367265e+03
+                                                                                                                                       │iter=0112 | J=4.786307e+03 | ||grad||=3.026197143738e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786305645588e+03
+                                                                                                                                       │iter=0113 | J=4.786306e+03 | ||grad||=3.364178074395e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786303733115e+03
+                                                                                                                                       │iter=0114 | J=4.786304e+03 | ||grad||=3.645157878207e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786301631820e+03
+                                                                                                                                       │iter=0115 | J=4.786302e+03 | ||grad||=3.646512217410e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786299530808e+03
+                                                                                                                                       │iter=0116 | J=4.786300e+03 | ||grad||=3.275852265721e-02
+                                                                                                                                       │  backtrack step=1.000e+00
+                                                                                                                                       │  trial objective=4.786297663397e+03
