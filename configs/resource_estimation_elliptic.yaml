@@ -1,6 +1,6 @@
 experiment: elliptic
 
-experiment_type: exp2
+experiment_type: exp1
 
 model:
   nx: 4
@@ -44,8 +44,8 @@ resource_estimation:
   readout: swap_test
   eig_oracle: classical
   optimization_level: 3
-  csv_name: elliptic2_nx_4_resource_estimation.csv
-  plot_name: elliptic2_nx_4_two_qubit_gates_vs_problem_size.png
+  csv_name: elliptic1_nx_4_resource_estimation.csv
+  plot_name: elliptic1_nx_4_two_qubit_gates_vs_problem_size.png
   gate_budget_lines: [5000, 10000, 20000,40000]
 
   backends:
