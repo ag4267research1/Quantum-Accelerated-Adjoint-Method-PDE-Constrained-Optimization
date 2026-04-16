@@ -1,0 +1,7 @@
+problem_size,AerSimulator_two_qubit_gates,AerSimulator_depth,AerSimulator_num_qubits,ibm_fez_two_qubit_gates,ibm_fez_depth,ibm_fez_num_qubits,ibm_kingston_two_qubit_gates,ibm_kingston_depth,ibm_kingston_num_qubits,ibm_marrakesh_two_qubit_gates,ibm_marrakesh_depth,ibm_marrakesh_num_qubits
+4,24,42,8,140,516,8,135,518,8,138,525,8
+8,118,139,11,931,3117,11,948,3121,11,983,3220,11
+16,418,570,14,5219,16427,15,5242,17125,14,5006,16551,14
+32,1352,1735,17,24767,80710,18,24856,79540,17,25233,81997,17
+64,3728,4268,20,105262,358139,20,102095,346939,23,104123,351736,23
+128,10522,19751,23,475246,1644298,28,480388,1641169,23,467653,1632575,27

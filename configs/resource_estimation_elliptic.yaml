@@ -1,0 +1,65 @@
+experiment: elliptic
+
+experiment_type: exp2
+
+model:
+  nx: 4
+
+optimizer:
+  max_iter: 1
+  alpha: 1e-4
+  use_backtracking: true
+  armijo_c: 1e-6
+  backtracking_tau: 0.5
+  min_step: 1e-10
+  max_backtracks: 8
+
+solver:
+  mode: hybrid
+
+quantum:
+  shots: 64
+  spectral_points: 4
+  delta: 0.001
+
+  backend_mode: ibm
+  ibm_backend_name: null
+  ibm_channel: null
+  ibm_token: null
+  ibm_instance: null
+  ibm_use_least_busy: true
+
+plots:
+  show_solution: false
+  show_scaling: false
+  output_dir: output/resource_estimation/elliptic/experiment3
+
+scaling:
+  sizes: [4]
+  iterations: 1
+
+resource_estimation:
+  sizes: [ 4, 8, 16, 32, 64, 128]
+  control_index: 0
+  readout: swap_test
+  eig_oracle: classical
+  optimization_level: 3
+  csv_name: elliptic2_nx_4_resource_estimation.csv
+  plot_name: elliptic2_nx_4_two_qubit_gates_vs_problem_size.png
+  gate_budget_lines: [5000, 10000, 20000,40000]
+
+  backends:
+    - kind: aer
+      label: AerSimulator
+
+    - kind: ibm
+      name: ibm_fez
+      label: ibm_fez
+
+    - kind: ibm
+      name: ibm_kingston
+      label: ibm_kingston
+
+    - kind: ibm
+      name: ibm_marrakesh
+      label: ibm_marrakesh

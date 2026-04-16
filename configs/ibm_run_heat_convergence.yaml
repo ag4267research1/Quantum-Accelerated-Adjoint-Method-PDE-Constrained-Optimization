@@ -1,7 +1,8 @@
-experiment: heat
+experiment: elliptic
+
+experiment_type: exp3
 
 model:
-  n: 4
   nx: 2
 
 optimizer:
@@ -29,8 +30,8 @@ quantum:
   ibm_use_least_busy: true
 
 scaling:
-  sizes: [4]
-  iterations: 1
+  sizes: [4,16,32]
+ 
 
 plots:
   show_solution: true
