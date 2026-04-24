@@ -216,3 +216,36 @@
       </div>
     </div>
   </div>
+
+
+
+
+
+  <!-- Image carousel -->
+<section class="hero is-small">
+  <div class="hero-body">
+    <div class="container">
+      <div class="carousel-shell">
+      <div id="results-carousel" class="carousel results-carousel">
+       <div class="item">
+        <!-- TODO: Replace with your research result images -->
+        <img src="static/images/Figure_1.png" alt="First research result visualization" loading="lazy"/>
+        <!-- TODO: Replace with description of this result -->
+        <h2 class="subtitle has-text-centered">
+          This plot shows the temperature distribution obtained using the hybrid quantum–classical solver for the 1D heat equation. The smooth profile reflects the expected steady-state solution with boundary constraints.
+        </h2>
+      </div>
+      <div class="item">
+        <!-- Your image here -->
+        <img src="static/images/SCALING STUDY.png" alt="Second research result visualization" loading="lazy"/>
+        <h2 class="subtitle has-text-centered">
+       This plot shows the temperature distribution obtained using the hybrid quantum–classical solver for the 1D heat equation.
+        </h2>
+      </div>
+
+  </div>
+</div>
+</div>
+</div>
+</section>
+<!-- End image carousel -->

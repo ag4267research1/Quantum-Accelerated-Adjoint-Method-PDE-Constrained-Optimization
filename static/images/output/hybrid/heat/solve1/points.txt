@@ -1,0 +1,1 @@
+I am using the spectral gradient formula for this particular solve. u = 16 , nx = 2 

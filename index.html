@@ -559,35 +559,162 @@ step-size conditions of Lemma 5.3.</p>
 
 
 
-
 <!-- Image carousel -->
-<section class="hero is-small">
+<section class="hero is-small results-section">
   <div class="hero-body">
     <div class="container">
+
+      <h2 class="title is-3 has-text-centered">Experiments and Results</h2>
+
+      <section class="key-idea-section">
+
+ <p>
+        We consider two PDE-constrained optimization experiments. The first is a heat equation ,
+      </p>
+
+      \[
+      -\kappa\,u''(y)
+      +
+      \epsilon(u)\bigl(u^4-T_\infty^4\bigr)
+      +
+      h\bigl(u-T_\infty\bigr)
+      =
+      Bx,
+      \]
+
+      <p>
+        with objective
+      </p>
+
+      \[
+      J(u,x)=\frac12\|u-u_d\|^2+\frac{\beta}{2}\|x\|^2.
+      \]
+
+      <p>
+        The second is an elliptic equation
+      </p>
+
+      \[
+      -\bigl(\kappa(x)u'(x)\bigr)'
+      +
+      c(x)u(x)
+      =
+      Bx+f(x),
+      \qquad
+      u(0)=u(1)=0,
+      \]
+
+      <p>
+        with objective
+      </p>
+
+      \[
+      J(u,x)=\frac12\|u-u_d\|^2+\frac{\alpha}{2}\|x\|^2.
+      \]
+
+      <p>
+        Both experiments are discretized by finite differences and used to compare classical and hybrid methods.
+      </p>
+
+
+
+</section>
+
+      
       <div class="carousel-shell">
-      <div id="results-carousel" class="carousel results-carousel">
-       <div class="item">
-        <!-- TODO: Replace with your research result images -->
-        <img src="static/images/Figure_1.png" alt="First research result visualization" loading="lazy"/>
-        <!-- TODO: Replace with description of this result -->
-        <h2 class="subtitle has-text-centered">
-          This plot shows the temperature distribution obtained using the hybrid quantum–classical solver for the 1D heat equation. The smooth profile reflects the expected steady-state solution with boundary constraints.
-        </h2>
-      </div>
-      <div class="item">
-        <!-- Your image here -->
-        <img src="static/images/SCALING STUDY.png" alt="Second research result visualization" loading="lazy"/>
-        <h2 class="subtitle has-text-centered">
-       This plot shows the temperature distribution obtained using the hybrid quantum–classical solver for the 1D heat equation.
-        </h2>
+        <div id="results-carousel" class="carousel results-carousel">
+
+          <!-- Carousel Item 1: Six results in one block -->
+          <div class="item">
+            <div class="result-grid-6">
+
+              <div class="result-card">
+                <img src="static/images/output/classical/heat/solve1/classical_condition_number_vs_iteration.png" alt="Result 1" loading="lazy">
+                <p>Fig 1 (classical) </p>
+              </div>
+
+              <div class="result-card">
+                <img src="static/images/output/classical/heat/solve1/classical_gradient_vs_iteration.png" alt="Result 2" loading="lazy">
+                <p>Fig 2 (classical)</p>
+              </div>
+
+              <div class="result-card">
+                <img src="static/images/output/classical/heat/solve1/classical_objective_vs_iteration.png" alt="Result 3" loading="lazy">
+                <p>Fig 3 (classical)</p>
+              </div>
+
+              <div class="result-card">
+                <img src="static/images/output/hybrid/heat/solve_hybrid_1e_3__nu_16___nx_2_NoSpectralGradient/hybrid_condition_number_vs_iteration.png" alt="Result 4" loading="lazy">
+                <p>Fig 4 (hybrid)</p>
+              </div>
+
+              <div class="result-card">
+                <img src="static/images/output/hybrid/heat/solve_hybrid_1e_3__nu_16___nx_2_NoSpectralGradient/hybrid_gradient_vs_iteration.png" alt="Result 5" loading="lazy">
+                <p>Fig 5 (hybrid)</p>
+              </div>
+
+              <div class="result-card">
+                <img src="static/images/output/hybrid/heat/solve_hybrid_1e_3__nu_16___nx_2_NoSpectralGradient/hybrid_objective_vs_iteration.png" alt="Result 6" loading="lazy">
+                <p>Fig 6 (hybrid)</p>
+              </div>
+
+            </div>
+
+            <h2 class="subtitle has-text-centered result-caption">
+              Heat Model Comparison
+            </h2>
+          </div>
+
+
+          <!-- Carousel Item 2: Another six results -->
+          <div class="item">
+            <div class="result-grid-6">
+
+              <div class="result-card">
+                <img src="static/images/output/classical/elliptic/exp3/elliptic_classical_n16_condition_number_vs_iteration.png" alt="Result 7" loading="lazy">
+                <p>Fig 1 (classical)</p>
+              </div>
+
+              <div class="result-card">
+                <img src="static/images/output/classical/elliptic/exp3/elliptic_classical_n16_gradient_vs_iteration.png" alt="Result 8" loading="lazy">
+                <p>Fig 2 (classical)</p>
+              </div>
+
+              <div class="result-card">
+                <img src="static/images/output/classical/elliptic/exp3/elliptic_classical_n16_objective_vs_iteration.png" alt="Result 9" loading="lazy">
+                <p>Fig 3 (classical)</p>
+              </div>
+
+              <div class="result-card">
+                <img src="static/images/output/hybrid/precision_1e_5/elliptic/No_Spectral/exp3/elliptic_hybrid_n16_condition_number_vs_iteration.png" alt="Result 10" loading="lazy">
+                <p>Result 10</p>
+              </div>
+
+              <div class="result-card">
+                <img src="static/images/output/hybrid/precision_1e_5/elliptic/No_Spectral/exp3/elliptic_hybrid_n16_gradient_vs_iteration.png" alt="Result 11" loading="lazy">
+                <p>Result 11</p>
+              </div>
+
+              <div class="result-card">
+                <img src="static/images/output/hybrid/precision_1e_5/elliptic/No_Spectral/exp3/elliptic_hybrid_n16_objective_vs_iteration.png" alt="Result 12" loading="lazy">
+                <p>Result 12</p>
+              </div>
+
+            </div>
+
+            <h2 class="subtitle has-text-centered result-caption">
+              Elliptic Model Comparison
+            </h2>
+          </div>
+
+        </div>
       </div>
 
+    </div>
   </div>
-</div>
-</div>
-</div>
 </section>
 <!-- End image carousel -->
+
 
 
 <!--BibTex citation -->
