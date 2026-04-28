@@ -3,7 +3,7 @@ experiment: elliptic
 experiment_type: exp3
 
 model:
-  nx: 2
+  nx: 4
 
 optimizer:
   max_iter: 120
@@ -30,10 +30,10 @@ quantum:
   ibm_use_least_busy: true
 
 scaling:
-  sizes: [4,16,32]
+  sizes: [8,16,32]
  
 
 plots:
   show_solution: true
   show_scaling: false
-  output_dir: output/ibm_hybrid_n4_nx2
+  output_dir: output/elliptic/exp3

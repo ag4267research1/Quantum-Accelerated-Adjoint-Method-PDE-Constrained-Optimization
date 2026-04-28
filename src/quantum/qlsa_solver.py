@@ -6,11 +6,12 @@ from qiskit.quantum_info import Statevector
 from qiskit_aer import AerSimulator
 
 from qlsas.algorithms.hhl.hhl import HHL
-from qlsas.data_loader import StatePrep
+from qlsas.state_prep import DefaultStatePrep
 from qlsas.executer import Executer
 from qlsas.post_processor import Post_Processor
 from qlsas.transpiler import Transpiler
-
+from qlsas.algorithms.hhl.eig_oracles import ClassicalEigOracle
+from qlsas.readout.swap_test import SwapTestReadout
 """
 Quantum adjoint solver wrapper for PDE-constrained optimization.
 
@@ -178,10 +179,8 @@ def _get_swap_runtime(
 
     if key not in _SWAP_RUNTIME_CACHE:
         hhl = HHL(
-            state_prep=StatePrep(method="default"),
-            readout="swap_test",
             num_qpe_qubits=int(np.log2(dim)),
-            eig_oracle="classical",
+            eig_oracle=ClassicalEigOracle(),
         )
 
         backend = _build_backend(
@@ -457,6 +456,198 @@ def adjoint_solver(
 # ----------------------------------------------------------
 # Public API 2: overlap estimation
 # ----------------------------------------------------------
+### Old version of QCOL QLSA 
+# def inner_product(left, right, shots=1024, **kwargs):
+#     r"""
+#     Estimate the overlap magnitude used in the reduced-gradient assembly.
+#     """
+
+#     # --------------------------------------------------
+#     # Mode 1: HHL + swap-test readout from adjoint handle
+#     # --------------------------------------------------
+#     if isinstance(left, AdjointSwapHandle):
+#         v_unit, w_norm = _build_test_vector(left, right)
+
+#         if w_norm == 0:
+#             return 0.0
+
+#         dim = len(left.rhs_vector)
+#         hhl, backend, executer, post_processor = _get_swap_runtime(
+#             dim,
+#             backend_mode=kwargs.get("backend_mode", "aer"),
+#             ibm_backend_name=kwargs.get("ibm_backend_name"),
+#             ibm_channel=kwargs.get("ibm_channel"),
+#             ibm_token=kwargs.get("ibm_token"),
+#             ibm_instance=kwargs.get("ibm_instance"),
+#             ibm_use_least_busy=kwargs.get("ibm_use_least_busy", False),
+#         )
+
+#         circuit = hhl.build_circuit(
+#             left.system_matrix,
+#             left.rhs_vector,
+#             swap_test_vector=v_unit,
+#         )
+
+#         transpiler = Transpiler(
+#             circuit=circuit,
+#             backend=backend,
+#             optimization_level=0,
+#         )
+#         transpiled_circuit = transpiler.optimize()
+
+#         result = executer.run(
+#             transpiled_circuit,
+#             backend,
+#             int(shots),
+#             verbose=False,
+#         )
+
+#         # process_swap_test(...)[0] is P(1 | success), not the overlap.
+#         exp_value = post_processor.process_swap_test(
+#             result,
+#             left.system_matrix,
+#             left.rhs_vector,
+#             v_unit,
+#         )[0]
+
+#         # For the swap test:
+#         #   P(1) = (1 - |<v|x>|^2) / 2
+#         # so
+#         #   |<v|x>| = sqrt(max(0, 1 - 2 P(1))).
+#         overlap_mag = np.sqrt(max(0.0, 1.0 - 2.0 * exp_value))
+
+#         # recover the sign classically for testing
+#         sign = _classical_overlap_sign(
+#             left.system_matrix,
+#             left.rhs_vector,
+#             v_unit,
+#         )
+
+#         return float(sign * overlap_mag * w_norm)
+
+#     # --------------------------------------------------
+#     # Mode 2: fallback local standalone swap test
+#     # --------------------------------------------------
+#     if isinstance(left, Statevector):
+#         p_vec = np.asarray(np.real(left.data), dtype=float)
+#         left_is_statevector = True
+#     else:
+#         p_vec = np.asarray(left, dtype=float)
+#         left_is_statevector = False
+
+#     w_vec = np.asarray(right, dtype=float)
+
+#     max_len = max(len(p_vec), len(w_vec))
+#     n = max(1, int(np.ceil(np.log2(max_len))))
+#     size = 2 ** n
+
+#     p_pad = np.zeros(size, dtype=float)
+#     w_pad = np.zeros(size, dtype=float)
+
+#     p_pad[:len(p_vec)] = p_vec
+#     w_pad[:len(w_vec)] = w_vec
+
+#     p_norm = np.linalg.norm(p_pad)
+#     w_norm = np.linalg.norm(w_pad)
+
+#     if p_norm == 0 or w_norm == 0:
+#         return 0.0
+
+#     p_pad = p_pad / p_norm
+#     w_pad = w_pad / w_norm
+
+#     qc = QuantumCircuit(1 + 2 * n, 1)
+
+#     qc.initialize(p_pad, range(1, n + 1))
+#     qc.initialize(w_pad, range(n + 1, 2 * n + 1))
+
+#     qc.h(0)
+
+#     for i in range(n):
+#         qc.cswap(0, 1 + i, 1 + n + i)
+
+#     qc.h(0)
+#     qc.measure(0, 0)
+
+#     backend = _build_backend(
+#         backend_mode=kwargs.get("backend_mode", "aer"),
+#         ibm_backend_name=kwargs.get("ibm_backend_name"),
+#         ibm_channel=kwargs.get("ibm_channel"),
+#         ibm_token=kwargs.get("ibm_token"),
+#         ibm_instance=kwargs.get("ibm_instance"),
+#         ibm_use_least_busy=kwargs.get("ibm_use_least_busy", False),
+#     )
+
+#     result = backend.run(qc, shots=int(shots)).result()
+#     counts = result.get_counts()
+
+#     p0 = counts.get("0", 0) / int(shots)
+#     overlap = np.sqrt(max(0.0, 2.0 * p0 - 1.0))
+
+#     sign = np.sign(np.dot(p_pad, w_pad))
+#     if sign == 0:
+#         sign = 1.0
+
+#     if left_is_statevector:
+#         overlap = w_norm * overlap
+#     else:
+#         overlap = p_norm * w_norm * overlap
+
+#     return float(sign * overlap)
+
+
+#Latest QCOL QLSA refactored
+
+_SWAP_RUNTIME_CACHE = {}
+
+
+def _get_swap_runtime(
+    dim,
+    backend_mode="aer",
+    ibm_backend_name=None,
+    ibm_channel=None,
+    ibm_token=None,
+    ibm_instance=None,
+    ibm_use_least_busy=False,
+):
+    key = (
+        int(dim),
+        backend_mode,
+        ibm_backend_name,
+        ibm_channel,
+        ibm_instance,
+        bool(ibm_use_least_busy),
+    )
+
+    if key not in _SWAP_RUNTIME_CACHE:
+        hhl = HHL(
+            num_qpe_qubits=int(np.log2(dim)),
+            eig_oracle=ClassicalEigOracle(),
+        )
+
+        backend = _build_backend(
+            backend_mode=backend_mode,
+            ibm_backend_name=ibm_backend_name,
+            ibm_channel=ibm_channel,
+            ibm_token=ibm_token,
+            ibm_instance=ibm_instance,
+            ibm_use_least_busy=ibm_use_least_busy,
+        )
+
+        executer = Executer()
+        post_processor = Post_Processor()
+        state_prep = DefaultStatePrep()
+
+        _SWAP_RUNTIME_CACHE[key] = (
+            hhl,
+            backend,
+            executer,
+            post_processor,
+            state_prep,
+        )
+
+    return _SWAP_RUNTIME_CACHE[key]
+
 
 def inner_product(left, right, shots=1024, **kwargs):
     r"""
@@ -473,7 +664,8 @@ def inner_product(left, right, shots=1024, **kwargs):
             return 0.0
 
         dim = len(left.rhs_vector)
-        hhl, backend, executer, post_processor = _get_swap_runtime(
+
+        hhl, backend, executer, post_processor, state_prep = _get_swap_runtime(
             dim,
             backend_mode=kwargs.get("backend_mode", "aer"),
             ibm_backend_name=kwargs.get("ibm_backend_name"),
@@ -483,10 +675,34 @@ def inner_product(left, right, shots=1024, **kwargs):
             ibm_use_least_busy=kwargs.get("ibm_use_least_busy", False),
         )
 
-        circuit = hhl.build_circuit(
-            left.system_matrix,
-            left.rhs_vector,
+        A = np.asarray(left.system_matrix, dtype=float)
+        b = np.asarray(left.rhs_vector, dtype=float)
+
+        b_norm = np.linalg.norm(b)
+        if b_norm == 0:
+            return 0.0
+
+        b_unit = b / b_norm
+
+        # Build only the core HHL circuit.
+        # HHL.build_circuit(A, b, state_prep, *, t0=None, C=None)
+        # It does NOT accept swap_test_vector.
+        qlsa_circuit = hhl.build_circuit(
+            A,
+            b_unit,
+            state_prep,
+        )
+
+        # Attach swap-test readout separately.
+        readout = SwapTestReadout(
             swap_test_vector=v_unit,
+            state_prep=state_prep,
+            post_processor=post_processor,
+        )
+
+        circuit = readout.apply(
+            qlsa_circuit,
+            state_prep=state_prep,
         )
 
         transpiler = Transpiler(
@@ -503,24 +719,28 @@ def inner_product(left, right, shots=1024, **kwargs):
             verbose=False,
         )
 
-        # process_swap_test(...)[0] is P(1 | success), not the overlap.
-        exp_value = post_processor.process_swap_test(
+        swap_result = readout.process(
             result,
-            left.system_matrix,
-            left.rhs_vector,
-            v_unit,
-        )[0]
+            A,
+            b_unit,
+            verbose=False,
+        )
+
+        if isinstance(swap_result, (tuple, list)):
+            exp_value = float(swap_result[0])
+        else:
+            exp_value = float(swap_result)
 
         # For the swap test:
         #   P(1) = (1 - |<v|x>|^2) / 2
-        # so
+        # so:
         #   |<v|x>| = sqrt(max(0, 1 - 2 P(1))).
         overlap_mag = np.sqrt(max(0.0, 1.0 - 2.0 * exp_value))
 
-        # recover the sign classically for testing
+        # Recover the sign classically for testing/debugging.
         sign = _classical_overlap_sign(
-            left.system_matrix,
-            left.rhs_vector,
+            A,
+            b_unit,
             v_unit,
         )
 
