@@ -47,6 +47,23 @@ class AdjointSwapHandle:
 
 
 # ----------------------------------------------------------
+# Per-call quantum metrics log
+# ----------------------------------------------------------
+
+_QUANTUM_LOG: list[dict] = []
+
+
+def get_quantum_log() -> list[dict]:
+    """Return a copy of the per-call quantum metrics log."""
+    return list(_QUANTUM_LOG)
+
+
+def clear_quantum_log() -> None:
+    """Clear the quantum metrics log (call before each optimization run)."""
+    _QUANTUM_LOG.clear()
+
+
+# ----------------------------------------------------------
 # Backend construction and runtime cache
 # ----------------------------------------------------------
 
@@ -398,6 +415,15 @@ def inner_product(left, right, shots=1024, **kwargs):
         else:
             result = executer.run(transpiled_circuit, backend, int(shots), verbose=False)
             swap_result = readout.process(result, A, b_unit, verbose=False)
+
+        success_rate = float(swap_result[1]) if isinstance(swap_result, (tuple, list)) else None
+        _QUANTUM_LOG.append({
+            "call": len(_QUANTUM_LOG),
+            "shots": int(shots),
+            "successful_shots": round(success_rate * int(shots)) if success_rate is not None else None,
+            "success_rate": success_rate,
+            "residual": float(swap_result[2]) if isinstance(swap_result, (tuple, list)) else None,
+        })
 
         exp_value = float(swap_result[0] if isinstance(swap_result, (tuple, list)) else swap_result)
 

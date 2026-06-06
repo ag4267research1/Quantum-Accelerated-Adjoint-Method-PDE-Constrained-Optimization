@@ -261,6 +261,7 @@ class Optimizer:
 
                     if not accepted:
                         step = 0.0
+                        accepted_step = 0
 
                         if store_history:
                             history["step_size"].append(step)
@@ -290,9 +291,7 @@ class Optimizer:
                     state_solver=self.state_solver,
                     **kwargs,
                 )
-            backtrack_count = 0
-            accepted_step = 1
-            
+
             if store_history:
                 history["step_size"].append(step)
                 history["backtrack_count"].append(backtrack_count)

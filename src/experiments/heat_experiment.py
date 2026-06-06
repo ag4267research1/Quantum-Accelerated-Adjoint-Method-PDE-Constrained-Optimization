@@ -15,7 +15,10 @@ from src.classical.classical_solver import (
 from src.quantum.qlsa_solver import (
     adjoint_solver as qlsa_solver,
     inner_product as swap_test_inner_product,
+    clear_quantum_log,
+    get_quantum_log,
 )
+
 from src.quantum.spectral_gradient import spectral_gradient
 
 
@@ -175,13 +178,49 @@ def save_superimposed_history_plots(histories_by_n, output_dir, mode):
     plt.close()
 
 
+def _save_quantum_call_log(quantum_logs_by_n, output_dir, mode, nx):
+    """Save the raw per-call quantum log to CSV (one row per inner_product call)."""
+    csv_path = os.path.join(output_dir, f"{mode}_quantum_calls.csv")
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["n", "nx", "iteration", "call_within_iteration", "shots", "successful_shots", "success_rate", "residual"])
+        writer.writeheader()
+        for n, log in quantum_logs_by_n.items():
+            for entry in log:
+                iteration = entry["call"] // nx
+                call_within = entry["call"] % nx
+                writer.writerow({
+                    "n": n,
+                    "nx": nx,
+                    "iteration": iteration,
+                    "call_within_iteration": call_within,
+                    "shots": entry["shots"],
+                    "successful_shots": entry["successful_shots"],
+                    "success_rate": entry["success_rate"],
+                    "residual": entry["residual"],
+                })
+    print(f"Saved per-call quantum log to: {csv_path}")
+
+
+def _aggregate_quantum_log(log, iteration, nx):
+    """Return per-iteration quantum metrics aggregated over nx calls."""
+    calls = log[iteration * nx : (iteration + 1) * nx]
+    if not calls:
+        return {"shots": np.nan, "successful_shots": np.nan, "avg_success_rate": np.nan, "avg_residual": np.nan}
+    return {
+        "shots": calls[0]["shots"],
+        "successful_shots": sum(c["successful_shots"] for c in calls if c["successful_shots"] is not None),
+        "avg_success_rate": float(np.mean([c["success_rate"] for c in calls if c["success_rate"] is not None])),
+        "avg_residual": float(np.mean([c["residual"] for c in calls if c["residual"] is not None])),
+    }
+
+
 def _history_value(history, key, idx, default=np.nan):
     """Safe index into a history list; returns default if out of range."""
     values = history.get(key, [])
     return values[idx] if idx < len(values) else default
 
 
-def save_superimposed_history_csv(histories_by_n, output_dir, mode, nx):
+def save_superimposed_history_csv(histories_by_n, output_dir, mode, nx, quantum_logs_by_n=None):
     """Export per-iteration data for all state sizes to a single CSV."""
     os.makedirs(output_dir, exist_ok=True)
 
@@ -190,7 +229,8 @@ def save_superimposed_history_csv(histories_by_n, output_dir, mode, nx):
     fieldnames = [
         "mode", "n", "nx", "iteration",
         "objective", "gradient_norm", "condition_number", "step_size",
-        "shots_per_iteration", "backtrack_count", "accepted_step",
+        "shots_per_iteration", "successful_shots", "avg_success_rate", "avg_residual",
+        "backtrack_count", "accepted_step",
     ]
 
     with open(csv_path, "w", newline="") as f:
@@ -202,7 +242,12 @@ def save_superimposed_history_csv(histories_by_n, output_dir, mode, nx):
                 (len(v) for v in history.values() if isinstance(v, list)),
                 default=0,
             )
+            q_log = (quantum_logs_by_n or {}).get(n, [])
             for k in range(num_rows):
+                q = _aggregate_quantum_log(q_log, k, nx) if q_log else {
+                    "shots": np.nan, "successful_shots": np.nan,
+                    "avg_success_rate": np.nan, "avg_residual": np.nan,
+                }
                 writer.writerow({
                     "mode": mode,
                     "n": n,
@@ -213,11 +258,14 @@ def save_superimposed_history_csv(histories_by_n, output_dir, mode, nx):
                     "condition_number": _history_value(history, "condition_number", k),
                     "step_size": _history_value(history, "step_size", k),
                     "shots_per_iteration": _history_value(history, "shots_per_iteration", k, 0),
+                    "successful_shots": q["successful_shots"],
+                    "avg_success_rate": q["avg_success_rate"],
+                    "avg_residual": q["avg_residual"],
                     "backtrack_count": _history_value(history, "backtrack_count", k, 0),
                     "accepted_step": _history_value(history, "accepted_step", k, 1),
                 })
 
-    print(f"Saved superimposed history CSV to: {csv_path}")
+    print(f"Saved iteration history CSV to: {csv_path}")
 
 
 # ------------------------------------------------------------
@@ -240,6 +288,8 @@ def plot_solution(config):
     plots_cfg = config.get("plots", {})
     output_dir = plots_cfg.get("output_dir", "output")
 
+    if mode == "hybrid":
+        clear_quantum_log()
     result = optimizer.optimize(
         x0,
         max_iter=optimizer_cfg.get("max_iter", 100),
@@ -280,6 +330,8 @@ def scaling_experiment(config):
         x0 = 0.01 * np.ones(model.nx)
         optimizer = _build_optimizer(model, mode)
 
+        if mode == "hybrid":
+            clear_quantum_log()
         start = time.time()
         optimizer.optimize(x0, max_iter=iterations, **optimize_kwargs)
         runtimes.append(time.time() - start)
@@ -309,21 +361,31 @@ def superimposed_history_experiment(config):
     os.makedirs(output_dir, exist_ok=True)
 
     histories_by_n = {}
+    quantum_logs_by_n = {}
 
     for n in sizes:
         model = HeatModel(n=n, nx=nx)
         x0 = 0.01 * np.ones(model.nx)
         optimizer = _build_optimizer(model, mode)
 
+        if mode == "hybrid":
+            clear_quantum_log()
         result = optimizer.optimize(
             x0,
             max_iter=optimizer_cfg.get("max_iter", 100),
             **optimize_kwargs,
         )
         histories_by_n[n] = result.history
+        if mode == "hybrid":
+            quantum_logs_by_n[n] = get_quantum_log()
 
     save_superimposed_history_plots(histories_by_n, output_dir, mode)
-    save_superimposed_history_csv(histories_by_n, output_dir, mode, nx)
+    save_superimposed_history_csv(
+        histories_by_n, output_dir, mode, nx,
+        quantum_logs_by_n=quantum_logs_by_n if mode == "hybrid" else None,
+    )
+    if mode == "hybrid" and quantum_logs_by_n:
+        _save_quantum_call_log(quantum_logs_by_n, output_dir, mode, nx)
 
 
 # ------------------------------------------------------------
