@@ -386,20 +386,18 @@ def inner_product(left, right, shots=1024, **kwargs):
         )
         circuit = readout.apply(qlsa_circuit, state_prep=state_prep)
 
-        if _is_ionq_backend(backend):
-            # IonQ doesn't preserve named classical registers in results, so
-            # join_data() inside readout.process() returns all-zero bitstrings.
-            # Use AerSimulator for HHL+swap-test execution which correctly
-            # handles named registers and mid-circuit measurements.
-            _exec_backend = AerSimulator()
-        else:
-            _exec_backend = backend
-
         transpiled_circuit = Transpiler(
-            circuit=circuit, backend=_exec_backend, optimization_level=0
+            circuit=circuit, backend=backend, optimization_level=0
         ).optimize()
-        result = executer.run(transpiled_circuit, _exec_backend, int(shots), verbose=False)
-        swap_result = readout.process(result, A, b_unit, verbose=False)
+        if _is_ionq_backend(backend):
+            # BackendSamplerV2 calls backend.run(memory=True) which IonQ does
+            # not support, causing all-zero results. Use backend.run() directly
+            # and pass the raw counts dict (accepted by to_counts() in qlsas).
+            counts = backend.run(transpiled_circuit, shots=int(shots)).result().get_counts()
+            swap_result = readout.process(counts, A, b_unit, verbose=False)
+        else:
+            result = executer.run(transpiled_circuit, backend, int(shots), verbose=False)
+            swap_result = readout.process(result, A, b_unit, verbose=False)
 
         exp_value = float(swap_result[0] if isinstance(swap_result, (tuple, list)) else swap_result)
 
@@ -457,6 +455,8 @@ def inner_product(left, right, shots=1024, **kwargs):
         ionq_backend_name=kwargs.get("ionq_backend_name"),
     )
 
+    from qiskit.compiler import transpile as _transpile
+    qc = _transpile(qc, backend=backend, optimization_level=0)
     result = backend.run(qc, shots=int(shots)).result()
     counts = result.get_counts()
 

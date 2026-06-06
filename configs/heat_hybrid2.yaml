@@ -15,10 +15,9 @@ optimizer:
 
 
 solver:
-  mode: classical
+  mode: hybrid
 quantum:
-  backend_mode: ionq_simulator
-  ionq_token: "A6zRFmoU6zosxoL1A3H8U1qODYuzuNXD"
+  backend_mode: aer
   shots: 512
   spectral_points: 16
   delta: 0.001
@@ -32,4 +31,4 @@ plots:
   show_solution: false
   show_scaling: false
   show_superimposed_histories: true
-  output_dir: output/classical/nx_4_nu_8
+  output_dir: output/hybrid/ionq/512shots/nx_4
