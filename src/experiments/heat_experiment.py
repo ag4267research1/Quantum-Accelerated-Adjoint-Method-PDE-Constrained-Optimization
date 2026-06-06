@@ -1,4 +1,5 @@
 import os
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -6,14 +7,11 @@ import time
 from src.models.heat_model import HeatModel
 from src.optimization.optimizer import Optimizer
 
-# classical components
 from src.classical.classical_solver import (
     state_solver,
     adjoint_solver as classical_adjoint_solver,
-    inner_product as classical_inner_product
+    inner_product as classical_inner_product,
 )
-
-# hybrid quantum components
 from src.quantum.qlsa_solver import (
     adjoint_solver as qlsa_solver,
     inner_product as swap_test_inner_product,
@@ -22,77 +20,71 @@ from src.quantum.spectral_gradient import spectral_gradient
 
 
 # ------------------------------------------------------------
-# Helper function: choose solver components
+# Private helpers
 # ------------------------------------------------------------
 
-def get_solver_components(mode):
-    """
-    Select the solver components depending on the chosen mode.
-
-    Parameters
-    ----------
-    mode : str
-        "classical" or "hybrid"
-
-    Returns
-    -------
-    adjoint_solver
-        Function used to solve the adjoint equation.
-
-    inner_product
-        Function used in the gradient assembly step.
-
-    gradient_estimator
-        Function used to estimate the control gradient.
-        For the classical mode this is None, so the optimizer
-        uses the model's analytic derivative. For the hybrid
-        mode this wraps the spectral gradient routine and
-        passes the classical state solver into it.
-    """
-
+def _get_solver_components(mode):
+    """Return (adjoint_solver, inner_product, gradient_estimator) for the given mode."""
     if mode == "classical":
+        return classical_adjoint_solver, classical_inner_product, None
 
-        return (
-            classical_adjoint_solver,
-            classical_inner_product,
-            None
-        )
+    if mode == "hybrid":
+        def _hybrid_gradient_estimator(**kwargs):
+            return spectral_gradient(state_solver=state_solver, **kwargs)
+        return qlsa_solver, swap_test_inner_product, _hybrid_gradient_estimator
 
-    elif mode == "hybrid":
+    raise ValueError(f"Unknown solver mode: {mode}")
 
-        def hybrid_gradient_estimator(**kwargs):
-            """
-            Wrapper around the spectral gradient estimator.
 
-            The spectral gradient routine needs access to the
-            classical state solver in order to evaluate the
-            reduced objective at perturbed control values.
-            """
+def _build_optimize_kwargs(config, mode):
+    """Build the kwargs dict forwarded into optimizer.optimize()."""
+    optimizer_cfg = config.get("optimizer", {})
+    kwargs = {
+        "alpha": optimizer_cfg.get("alpha", 1e-3),
+        "use_backtracking": optimizer_cfg.get("use_backtracking", True),
+        "armijo_c": optimizer_cfg.get("armijo_c", 1e-6),
+        "backtracking_tau": optimizer_cfg.get("backtracking_tau", 0.5),
+        "min_step": optimizer_cfg.get("min_step", 1e-10),
+        "max_backtracks": optimizer_cfg.get("max_backtracks", 30),
+    }
 
-            return spectral_gradient(
-                state_solver=state_solver,
-                **kwargs
-            )
+    if mode == "hybrid":
+        quantum_cfg = config.get("quantum", {})
+        kwargs.update({
+            "shots": quantum_cfg.get("shots", 64),
+            "delta": quantum_cfg.get("delta", 1e-3),
+            "N": quantum_cfg.get("spectral_points", 16),
+            "backend_mode": quantum_cfg.get("backend_mode", "aer"),
+            "ibm_backend_name": quantum_cfg.get("ibm_backend_name", None),
+            "ibm_channel": quantum_cfg.get("ibm_channel", None),
+            "ibm_token": quantum_cfg.get("ibm_token", None),
+            "ibm_instance": quantum_cfg.get("ibm_instance", None),
+            "ibm_use_least_busy": quantum_cfg.get("ibm_use_least_busy", False),
+            "ionq_token": quantum_cfg.get("ionq_token", None),
+            "ionq_backend_name": quantum_cfg.get("ionq_backend_name", None),
+        })
 
-        return (
-            qlsa_solver,
-            swap_test_inner_product,
-            hybrid_gradient_estimator
-        )
+    return kwargs
 
-    else:
-        raise ValueError(f"Unknown solver mode: {mode}")
+
+def _build_optimizer(model, mode):
+    """Construct an Optimizer wired to classical or hybrid solver components."""
+    adj_solver, ip, grad_estimator = _get_solver_components(mode)
+    return Optimizer(
+        model=model,
+        state_solver=state_solver,
+        adjoint_solver=adj_solver,
+        inner_product=ip,
+        control_gradient_estimator=grad_estimator,
+    )
 
 
 # ------------------------------------------------------------
-# Helper function: save optimization history plots
+# Plot helpers
 # ------------------------------------------------------------
 
 def save_history_plots(history, output_dir, mode):
-    """
-    Save iteration vs objective, gradient norm, and condition number plots.
-    """
-
+    """Save per-run objective, gradient norm, and condition number plots."""
     os.makedirs(output_dir, exist_ok=True)
 
     it_obj = np.arange(len(history["objective"]))
@@ -129,96 +121,137 @@ def save_history_plots(history, output_dir, mode):
     plt.close()
 
 
+def save_superimposed_history_plots(histories_by_n, output_dir, mode):
+    """Save objective, normalized objective, gradient norm, and condition number
+    plots with all state sizes overlaid on the same axes."""
+    os.makedirs(output_dir, exist_ok=True)
+
+    plt.figure()
+    for n, history in histories_by_n.items():
+        plt.plot(np.arange(len(history["objective"])), history["objective"], label=f"n={n}")
+    plt.xlabel("Iteration")
+    plt.ylabel("Objective")
+    plt.title(f"Objective vs Iteration ({mode}, fixed $n_x$)")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{mode}_superimposed_objective_vs_iteration.png"))
+    plt.close()
+
+    plt.figure()
+    for n, history in histories_by_n.items():
+        obj = np.asarray(history["objective"], dtype=float)
+        obj_norm = obj / obj[0] if len(obj) > 0 and not np.isclose(obj[0], 0.0) else obj
+        plt.plot(np.arange(len(obj)), obj_norm, label=f"n={n}")
+    plt.xlabel("Iteration")
+    plt.ylabel(r"Objective / $J_0$")
+    plt.title(f"Normalized Objective vs Iteration ({mode}, fixed $n_x$)")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{mode}_superimposed_objective_normalized_vs_iteration.png"))
+    plt.close()
+
+    plt.figure()
+    for n, history in histories_by_n.items():
+        plt.plot(np.arange(len(history["gradient_norm"])), history["gradient_norm"], label=f"n={n}")
+    plt.xlabel("Iteration")
+    plt.ylabel("Gradient Norm")
+    plt.title(f"Gradient Norm vs Iteration ({mode}, fixed $n_x$)")
+    plt.yscale("log")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{mode}_superimposed_gradient_vs_iteration.png"))
+    plt.close()
+
+    plt.figure()
+    for n, history in histories_by_n.items():
+        plt.plot(np.arange(len(history["condition_number"])), history["condition_number"], label=f"n={n}")
+    plt.xlabel("Iteration")
+    plt.ylabel("Condition Number")
+    plt.title(f"Condition Number vs Iteration ({mode}, fixed $n_x$)")
+    plt.yscale("log")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{mode}_superimposed_condition_number_vs_iteration.png"))
+    plt.close()
+
+
+def _history_value(history, key, idx, default=np.nan):
+    """Safe index into a history list; returns default if out of range."""
+    values = history.get(key, [])
+    return values[idx] if idx < len(values) else default
+
+
+def save_superimposed_history_csv(histories_by_n, output_dir, mode, nx):
+    """Export per-iteration data for all state sizes to a single CSV."""
+    os.makedirs(output_dir, exist_ok=True)
+
+    csv_path = os.path.join(output_dir, f"{mode}_superimposed_iteration_history.csv")
+
+    fieldnames = [
+        "mode", "n", "nx", "iteration",
+        "objective", "gradient_norm", "condition_number", "step_size",
+        "shots_per_iteration", "backtrack_count", "accepted_step",
+    ]
+
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for n, history in histories_by_n.items():
+            num_rows = max(
+                (len(v) for v in history.values() if isinstance(v, list)),
+                default=0,
+            )
+            for k in range(num_rows):
+                writer.writerow({
+                    "mode": mode,
+                    "n": n,
+                    "nx": nx,
+                    "iteration": k,
+                    "objective": _history_value(history, "objective", k),
+                    "gradient_norm": _history_value(history, "gradient_norm", k),
+                    "condition_number": _history_value(history, "condition_number", k),
+                    "step_size": _history_value(history, "step_size", k),
+                    "shots_per_iteration": _history_value(history, "shots_per_iteration", k, 0),
+                    "backtrack_count": _history_value(history, "backtrack_count", k, 0),
+                    "accepted_step": _history_value(history, "accepted_step", k, 1),
+                })
+
+    print(f"Saved superimposed history CSV to: {csv_path}")
+
+
 # ------------------------------------------------------------
-# Solution experiment
+# Experiments
 # ------------------------------------------------------------
 
 def plot_solution(config):
-    """
-    Run the solution experiment.
-
-    This experiment:
-    1. Builds the heat model
-    2. Selects either classical or hybrid components
-    3. Runs the optimizer
-    4. Solves for the final state
-    5. Plots the temperature profile
-    """
-
+    """Run the optimizer and plot the final temperature profile."""
     n = config["model"]["n"]
     nx = config["model"]["nx"]
-    max_iter = config["optimizer"]["max_iter"]
-
     mode = config["solver"]["mode"]
 
     model = HeatModel(n=n, nx=nx)
-
-    # small initial control
     x0 = 0.01 * np.ones(model.nx)
 
-    # choose solver components
-    adjoint_solver, inner_product, gradient_estimator = get_solver_components(mode)
-
-    optimizer = Optimizer(
-        model=model,
-        state_solver=state_solver,
-        adjoint_solver=adjoint_solver,
-        inner_product=inner_product,
-        control_gradient_estimator=gradient_estimator
-    )
-
-    optimize_kwargs = {}
-
-    # forward optimizer config to optimizer.optimize(...)
+    optimizer = _build_optimizer(model, mode)
     optimizer_cfg = config.get("optimizer", {})
-    optimize_kwargs["alpha"] = optimizer_cfg.get("alpha", 1e-3)
-    optimize_kwargs["use_backtracking"] = optimizer_cfg.get("use_backtracking", True)
-    optimize_kwargs["armijo_c"] = optimizer_cfg.get("armijo_c", 1e-6)
-    optimize_kwargs["backtracking_tau"] = optimizer_cfg.get("backtracking_tau", 0.5)
-    optimize_kwargs["min_step"] = optimizer_cfg.get("min_step", 1e-10)
-    optimize_kwargs["max_backtracks"] = optimizer_cfg.get("max_backtracks", 30)
+    optimize_kwargs = _build_optimize_kwargs(config, mode)
 
-    # CHANGED: no longer used by the current optimizer
-    # optimize_kwargs["use_quantum_surrogate"] = optimizer_cfg.get("use_quantum_surrogate", False)
-    # optimize_kwargs["quantum_beta"] = optimizer_cfg.get("quantum_beta", 0.05)
-
-    if mode == "hybrid":
-        quantum_cfg = config.get("quantum", {})
-        optimize_kwargs["shots"] = quantum_cfg.get("shots", 64)
-        optimize_kwargs["delta"] = quantum_cfg.get("delta", 1e-3)
-        optimize_kwargs["N"] = quantum_cfg.get("spectral_points", 16)
-
-        # CHANGED: preconditioning removed from qlsa_solver
-        # optimize_kwargs["use_preconditioning"] = quantum_cfg.get("use_preconditioning", True)
-
-        # CHANGED: backend forwarding for Aer / IBM
-        optimize_kwargs["backend_mode"] = quantum_cfg.get("backend_mode", "aer")
-        optimize_kwargs["ibm_backend_name"] = quantum_cfg.get("ibm_backend_name", None)
-        optimize_kwargs["ibm_channel"] = quantum_cfg.get("ibm_channel", None)
-        optimize_kwargs["ibm_token"] = quantum_cfg.get("ibm_token", None)
-        optimize_kwargs["ibm_instance"] = quantum_cfg.get("ibm_instance", None)
-        optimize_kwargs["ibm_use_least_busy"] = quantum_cfg.get("ibm_use_least_busy", False)
-
-    # define one output directory and save all plots there
     plots_cfg = config.get("plots", {})
     output_dir = plots_cfg.get("output_dir", "output")
 
-    # run optimization
-    result = optimizer.optimize(x0, max_iter=max_iter, **optimize_kwargs)
+    result = optimizer.optimize(
+        x0,
+        max_iter=optimizer_cfg.get("max_iter", 100),
+        **optimize_kwargs,
+    )
 
-    # save history plots in the output directory
     save_history_plots(result.history, output_dir=output_dir, mode=mode)
 
-    # optimizer returns the optimal control
-    x = result.x_star
-
-    # compute final state from the optimal control
-    u = state_solver(model, x)
-
-    grid = model.grid
+    u = state_solver(model, result.x_star)
 
     plt.figure()
-    plt.plot(grid, u)
+    plt.plot(model.grid, u)
     plt.xlabel("y")
     plt.ylabel("Temperature (state u)")
     plt.title(f"Heat Equation Solution ({mode})")
@@ -227,87 +260,29 @@ def plot_solution(config):
     plt.close()
 
 
-# ------------------------------------------------------------
-# Scaling experiment
-# ------------------------------------------------------------
-
 def scaling_experiment(config):
-    """
-    Run the scaling experiment.
-
-    This experiment measures runtime as the number of
-    state variables increases.
-    """
-
+    """Measure runtime as the number of state variables increases."""
     sizes = config["scaling"]["sizes"]
     iterations = config["scaling"]["iterations"]
     nx = config["model"]["nx"]
-
     mode = config["solver"]["mode"]
 
-    # choose solver components once
-    adjoint_solver, inner_product, gradient_estimator = get_solver_components(mode)
-
-    runtimes = []
+    optimize_kwargs = _build_optimize_kwargs(config, mode)
 
     plots_cfg = config.get("plots", {})
     output_dir = plots_cfg.get("output_dir", "output")
     os.makedirs(output_dir, exist_ok=True)
 
+    runtimes = []
+
     for n in sizes:
-
         model = HeatModel(n=n, nx=nx)
-
-        # small initial control
         x0 = 0.01 * np.ones(model.nx)
-
-        optimizer = Optimizer(
-            model=model,
-            state_solver=state_solver,
-            adjoint_solver=adjoint_solver,
-            inner_product=inner_product,
-            control_gradient_estimator=gradient_estimator
-        )
-
-        optimize_kwargs = {}
-
-        # forward optimizer config to optimizer.optimize(...)
-        optimizer_cfg = config.get("optimizer", {})
-        optimize_kwargs["alpha"] = optimizer_cfg.get("alpha", 1e-3)
-        optimize_kwargs["use_backtracking"] = optimizer_cfg.get("use_backtracking", True)
-        optimize_kwargs["armijo_c"] = optimizer_cfg.get("armijo_c", 1e-6)
-        optimize_kwargs["backtracking_tau"] = optimizer_cfg.get("backtracking_tau", 0.5)
-        optimize_kwargs["min_step"] = optimizer_cfg.get("min_step", 1e-10)
-        optimize_kwargs["max_backtracks"] = optimizer_cfg.get("max_backtracks", 30)
-
-        # CHANGED: no longer used by the current optimizer
-        # optimize_kwargs["use_quantum_surrogate"] = optimizer_cfg.get("use_quantum_surrogate", False)
-        # optimize_kwargs["quantum_beta"] = optimizer_cfg.get("quantum_beta", 0.05)
-
-        if mode == "hybrid":
-            quantum_cfg = config.get("quantum", {})
-            optimize_kwargs["shots"] = quantum_cfg.get("shots", 64)
-            optimize_kwargs["delta"] = quantum_cfg.get("delta", 1e-3)
-            optimize_kwargs["N"] = quantum_cfg.get("spectral_points", 16)
-
-            # CHANGED: preconditioning removed from qlsa_solver
-            # optimize_kwargs["use_preconditioning"] = quantum_cfg.get("use_preconditioning", True)
-
-            # CHANGED: backend forwarding for Aer / IBM
-            optimize_kwargs["backend_mode"] = quantum_cfg.get("backend_mode", "aer")
-            optimize_kwargs["ibm_backend_name"] = quantum_cfg.get("ibm_backend_name", None)
-            optimize_kwargs["ibm_channel"] = quantum_cfg.get("ibm_channel", None)
-            optimize_kwargs["ibm_token"] = quantum_cfg.get("ibm_token", None)
-            optimize_kwargs["ibm_instance"] = quantum_cfg.get("ibm_instance", None)
-            optimize_kwargs["ibm_use_least_busy"] = quantum_cfg.get("ibm_use_least_busy", False)
+        optimizer = _build_optimizer(model, mode)
 
         start = time.time()
-
         optimizer.optimize(x0, max_iter=iterations, **optimize_kwargs)
-
-        end = time.time()
-
-        runtimes.append(end - start)
+        runtimes.append(time.time() - start)
 
     plt.figure()
     plt.plot(sizes, runtimes, marker="o")
@@ -319,19 +294,54 @@ def scaling_experiment(config):
     plt.close()
 
 
+def superimposed_history_experiment(config):
+    """Run the optimizer for multiple state sizes with fixed nx and
+    save superimposed convergence plots and a CSV."""
+    sizes = config["scaling"]["sizes"]
+    nx = config["model"]["nx"]
+    mode = config["solver"]["mode"]
+
+    optimizer_cfg = config.get("optimizer", {})
+    optimize_kwargs = _build_optimize_kwargs(config, mode)
+
+    plots_cfg = config.get("plots", {})
+    output_dir = plots_cfg.get("output_dir", "output")
+    os.makedirs(output_dir, exist_ok=True)
+
+    histories_by_n = {}
+
+    for n in sizes:
+        model = HeatModel(n=n, nx=nx)
+        x0 = 0.01 * np.ones(model.nx)
+        optimizer = _build_optimizer(model, mode)
+
+        result = optimizer.optimize(
+            x0,
+            max_iter=optimizer_cfg.get("max_iter", 100),
+            **optimize_kwargs,
+        )
+        histories_by_n[n] = result.history
+
+    save_superimposed_history_plots(histories_by_n, output_dir, mode)
+    save_superimposed_history_csv(histories_by_n, output_dir, mode, nx)
+
+
 # ------------------------------------------------------------
-# Run experiment
+# Entry point
 # ------------------------------------------------------------
 
 def run_experiment(config):
-    """
-    Run the experiments selected in the configuration file.
-    """
+    """Dispatch to the experiments enabled in the config."""
+    plots_cfg = config.get("plots", {})
 
-    if config["plots"]["show_solution"]:
+    if plots_cfg["show_solution"]:
         print("Running solution experiment...")
         plot_solution(config)
 
-    if config["plots"]["show_scaling"]:
+    if plots_cfg["show_scaling"]:
         print("Running scaling experiment...")
         scaling_experiment(config)
+
+    if plots_cfg.get("show_superimposed_histories", False):
+        print("Running superimposed history experiment...")
+        superimposed_history_experiment(config)

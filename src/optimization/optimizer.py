@@ -48,7 +48,7 @@ class Optimizer:
         self,
         x0: Array,
         max_iter: int = 100,
-        tol: float = 1e-8,
+        tol: float = 1e-4,
         alpha: float = 1e-3,
         store_history: bool = True,
         verbose: bool = True,
@@ -92,6 +92,9 @@ class Optimizer:
             "gradient_norm": [],
             "step_size": [],
             "condition_number": [],
+            "shots_per_iteration": [],
+            "backtrack_count": [],
+            "accepted_step": [],
         }
 
         converged = False
@@ -186,10 +189,10 @@ class Optimizer:
                     **kwargs,
                 )
 
-            # CHANGED: use the standard reduced-gradient formula directly
             grad = g_x - p_scale * z_vec
 
             grad_norm = float(np.linalg.norm(grad))
+            shots_per_iteration = int(kwargs.get("shots", 0)) * len(x) if kwargs.get("shots", None) is not None else 0
 
             if not np.isfinite(grad_norm) or not np.all(np.isfinite(grad)):
                 if verbose:
@@ -200,6 +203,7 @@ class Optimizer:
                 history["objective"].append(J)
                 history["gradient_norm"].append(grad_norm)
                 history["condition_number"].append(cond_A)
+                history["shots_per_iteration"].append(shots_per_iteration)
 
             if verbose:
                 print(f"iter={k:04d} | J={J:.6e} | ||grad||={grad_norm:.12e}")
@@ -213,7 +217,7 @@ class Optimizer:
                     print(f"Converged at iteration {k}.")
                 break
 
-            if grad_norm < 1e-5:
+            if grad_norm < 1e-4:
                 converged = True
                 if verbose:
                     print(f"Converged at iteration {k} (gradient norm below 1e-4).")
@@ -222,6 +226,9 @@ class Optimizer:
             # -------------------------------------------------
             # Step 7: Step size / line search
             # -------------------------------------------------
+            backtrack_count = 0
+            accepted_step = 1
+            
             if self.line_search is None:
                 if use_backtracking:
                     step = alpha
@@ -247,6 +254,7 @@ class Optimizer:
                             break
 
                         step *= tau
+                        backtrack_count += 1
 
                         if step < min_step:
                             break
@@ -256,6 +264,8 @@ class Optimizer:
 
                         if store_history:
                             history["step_size"].append(step)
+                            history["backtrack_count"].append(backtrack_count)
+                            history["accepted_step"].append(accepted_step)
 
                         if verbose:
                             print("Backtracking failed to find a stable step. Skipping update and continuing.")
@@ -265,6 +275,8 @@ class Optimizer:
                 else:
                     # fixed-step gradient descent when backtracking is disabled
                     step = alpha
+                    backtrack_count = 0
+                    accepted_step = 1
                     if verbose:
                         print(f"  fixed step={step:.3e}")
 
@@ -278,9 +290,13 @@ class Optimizer:
                     state_solver=self.state_solver,
                     **kwargs,
                 )
-
+            backtrack_count = 0
+            accepted_step = 1
+            
             if store_history:
                 history["step_size"].append(step)
+                history["backtrack_count"].append(backtrack_count)
+                history["accepted_step"].append(accepted_step)
 
             # -------------------------------------------------
             # Step 8: Control update

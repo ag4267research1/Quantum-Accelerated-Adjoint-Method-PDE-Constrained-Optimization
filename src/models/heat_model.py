@@ -148,26 +148,6 @@ class HeatModel:
     # Default target profile
     # --------------------------------------------------
 
-    # def _default_target(self):
-    #     """
-    #     Construct a smooth default target profile for optimization.
-
-    #     The target is chosen to be near the ambient temperature in the
-    #     interior and lower near the boundaries. This avoids pushing the
-    #     optimizer toward extreme source values.
-
-    #     Returns
-    #     -------
-    #     ndarray of shape (n,)
-    #     """
-
-    #     y = (self.grid - self.x1) / (self.x2 - self.x1)
-
-    #     # Smooth plateau profile between the two boundaries
-    #     profile = 4.0 * y * (1.0 - y)
-
-    #     return self.T_inf * profile
-    
     def _default_target(self):
         """
         Construct a smoother, easier default target profile for optimization.
