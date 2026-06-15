@@ -7,10 +7,12 @@ class EllipticModel:
         self.config = config
 
         # --------------------------------------------------
-        # Grid control coordinate)
+        # Grid / control coordinate. The control x has the same
+        # dimension as the state u (B is the identity, or a masked
+        # identity for exp4).
         # --------------------------------------------------
 
-        self.n = config.get("grid_size", 32)
+        self.n = int(config.get("grid_size", 32))
         self.h = 1.0 / (self.n + 1)
 
         # x = domain grid
@@ -27,6 +29,9 @@ class EllipticModel:
         # CHANGED: cache desired state so we do not recompute it every call
         self._desired_state_cache = None
 
+        # Control-embedding operator B. u = A^{-1}(B x + f).
+        self.B = self._build_control_operator()
+
     # =========================================================
     # PUBLIC API
     # =========================================================
@@ -42,7 +47,7 @@ class EllipticModel:
         return A, b
 
     def initial_state(self):
-        return np.zeros(self.num_dofs)
+        return np.zeros(self.n)
 
     def residual(self, u, x):
         A, b = self.build_system(x)
@@ -64,9 +69,7 @@ class EllipticModel:
         return self.alpha * x
 
     def dc_dx_i(self, u, x, i):
-        e_i = np.zeros(self.num_dofs)
-        e_i[i] = 1.0
-        return -self._apply_control(e_i)
+        return -self.B[:, i]
 
     def desired_state(self):
         """
@@ -143,25 +146,10 @@ class EllipticModel:
         b = B x + f(x)
         """
 
-        Bx = self._apply_control(x)
+        Bx = self.B @ x
         f = self._f(self.x)
 
         return Bx + f
-
-    # =========================================================
-    # CONTROL
-    # =========================================================
-
-    def _apply_control(self, x):
-        """
-        Apply control operator
-        """
-
-        if self.exp_type == "exp4":
-            mask = self._control_mask(self.x)
-            return mask * x
-
-        return x
 
     # =========================================================
     # COEFFICIENTS
@@ -198,8 +186,33 @@ class EllipticModel:
         return np.zeros_like(x)
 
     # =========================================================
-    # CONTROL MASK
+    # CONTROL EMBEDDING OPERATOR B
     # =========================================================
+
+    def _build_control_operator(self):
+        """
+        Build the control-embedding operator B = I (the control x has
+        the same dimension as the state u, so Bx = x).
+
+        For exp4, _apply_control masks out rows of B outside the active
+        control region [0.2, 0.4], so (Bx)_i = x_i for grid points in
+        the mask and 0 otherwise.
+        """
+
+        return self._apply_control(np.eye(self.n))
+
+    def _apply_control(self, B):
+        """
+        Apply control operator: for exp4, zero out rows of B outside
+        the active control region (grid points where the control mask
+        is 0).
+        """
+
+        if self.exp_type == "exp4":
+            mask = self._control_mask(self.x)
+            return mask[:, None] * B
+
+        return B
 
     def _control_mask(self, x):
 
@@ -214,13 +227,13 @@ class EllipticModel:
     def _reference_control(self):
         """
         Build a small smooth reference control used only to generate
+        an attainable desired state.
         """
         if self.exp_type == "exp4":
             # For masked control, put a smooth bump inside the active region.
             center = 0.3
             width = 0.06
-            x_ref = self.target_scale * np.exp(-((self.x - center) ** 2) / (2.0 * width ** 2))
-            return x_ref
+            return self.target_scale * np.exp(-((self.x - center) ** 2) / (2.0 * width ** 2))
 
         # Default: smooth one-mode control over the whole domain.
         return self.target_scale * np.sin(np.pi * self.x)

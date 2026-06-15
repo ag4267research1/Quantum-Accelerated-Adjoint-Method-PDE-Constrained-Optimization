@@ -1,6 +1,6 @@
 
 """
-Elliptic PDE Experiment
+Elliptic2 PDE Experiment
 
 Generates:
 1. Runtime vs number of state variables
@@ -17,7 +17,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.models.elliptic_model import EllipticModel
+from src.models.elliptic2_model import Elliptic2Model
 from src.optimization.optimizer import Optimizer
 from src.quantum.qlsa_solver import (
     adjoint_solver as qlsa_solver,
@@ -372,7 +372,7 @@ def run_experiment(config):
         # --------------------------------------------
         # Build model
         # --------------------------------------------
-        model = EllipticModel(config)
+        model = Elliptic2Model(config)
         last_model = model
 
         # initial control
@@ -554,7 +554,7 @@ def plot_solution(result, model, state_solver, config):
 
     plt.figure()
     plt.plot(model.x, u, marker='o')
-    plt.title("Elliptic PDE Solution")
+    plt.title("Elliptic2 PDE Solution")
     plt.xlabel("x")
     plt.ylabel("State u(x)")
     plt.grid(True)

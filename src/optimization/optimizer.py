@@ -111,7 +111,7 @@ class Optimizer:
             use_backtracking = use_backtracking.strip().lower() in ("true", "1", "yes", "y", "on")
 
         k = 0
-        while k < max_iter and grad_norm >= 1e-5:
+        while k < max_iter:
 
             # -------------------------------------------------
             # Step 1: Solve state equation c(u,x)=0
@@ -215,12 +215,6 @@ class Optimizer:
                 converged = True
                 if verbose:
                     print(f"Converged at iteration {k}.")
-                break
-
-            if grad_norm < 1e-4:
-                converged = True
-                if verbose:
-                    print(f"Converged at iteration {k} (gradient norm below 1e-4).")
                 break
 
             # -------------------------------------------------

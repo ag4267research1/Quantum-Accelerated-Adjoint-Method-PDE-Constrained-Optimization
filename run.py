@@ -49,6 +49,9 @@ def main():
     elif experiment == "elliptic":
         from src.experiments.elliptic_experiment import run_experiment
 
+    elif experiment == "elliptic2":
+        from src.experiments.elliptic2_experiment import run_experiment
+
     else:
         raise ValueError(f"Unknown experiment: {experiment}")
 
