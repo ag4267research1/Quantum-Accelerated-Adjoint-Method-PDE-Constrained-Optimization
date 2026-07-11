@@ -1,4 +1,20 @@
-docs/hhl_qpe_resolution_fix.md
-docs/
-output/
-heatconfigs/
+# Ignore everything
+*
+
+# Un-ignore the four tracked paths
+!src/
+!src/**
+!configs/
+!configs/**
+!README.md
+!run.py
+!.gitignore
+
+# Re-ignore common junk inside src/ and configs/
+**/.DS_Store
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Explicitly ignored folders
+configs2/

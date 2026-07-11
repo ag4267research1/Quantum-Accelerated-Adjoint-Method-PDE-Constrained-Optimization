@@ -1,20 +1,17 @@
-experiment: elliptic2
-
-experiment_type: exp4
-
-alpha: 1e-2
+experiment: heat
 
 model:
+  n: 16
   nx: 4
 
 optimizer:
-  max_iter: 15
+  max_iter: 500
   alpha: 70
   use_backtracking: true
   armijo_c: 1e-6
   backtracking_tau: 0.5
   min_step: 1e-10
-  max_backtracks: 100
+  max_backtracks: 120
 
 solver:
   mode: hybrid
@@ -27,10 +24,11 @@ quantum:
   use_preconditioning: false
 
 scaling:
-  sizes: [8]
+  sizes: [4, 8, 16]
+  iterations: 1
 
 plots:
-  show_solution: false
+  show_solution: true
   show_scaling: false
-  show_superimposed_histories: true
-  output_dir: output/elliptic2/hybrid/elliptic2_test
+  show_superimposed_histories: false
+  output_dir: output/heat/simulator

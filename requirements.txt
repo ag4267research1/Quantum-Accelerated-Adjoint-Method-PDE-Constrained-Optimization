@@ -1,7 +1,0 @@
-matplotlib
-numpy
-PyYAML
-PyYAML
-qiskit
-qiskit_aer
-scipy

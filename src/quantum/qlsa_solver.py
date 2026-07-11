@@ -131,11 +131,9 @@ def _build_backend(
                 "Install it with: pip install qiskit-ionq"
             ) from exc
 
-        if ionq_token is None:
-            raise ValueError(
-                f"ionq_token is required for backend_mode='{backend_mode}'."
-            )
-
+        # If ionq_token is None, IonQProvider falls back to the IONQ_API_KEY
+        # (or QISKIT_IONQ_API_TOKEN / IONQ_API_TOKEN) environment variable,
+        # or a .env file in the working directory.
         provider = IonQProvider(token=ionq_token)
         if backend_mode == "ionq_simulator":
             name = "ionq_simulator"

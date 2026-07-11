@@ -1,32 +1,33 @@
 experiment: elliptic
 
-experiment_type: exp3
+experiment_type: exp1
 
 model:
   nx: 4
 
 optimizer:
   max_iter: 400
-  alpha: 450
+  alpha: 70
   use_backtracking: true
   armijo_c: 1e-6
   backtracking_tau: 0.5
   min_step: 1e-10
-  max_backtracks: 70
+  max_backtracks: 100
 
 solver:
   mode: hybrid
 
 quantum:
+  backend_mode: aer
   shots: 8192
   spectral_points: 16
   delta: 0.001
   use_preconditioning: false
 
 scaling:
-  sizes: [16,32,64]
+  sizes: [4, 8, 16]
 
 plots:
   show_solution: true
   show_scaling: false
-  output_dir: output/hybrid/elliptic/exp4
+  output_dir: output/elliptic/simulator/exp1
