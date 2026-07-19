@@ -41,8 +41,7 @@ $$
 $$
 
 Experiments in this project focus on validating adjoint gradients computed using 
-HHL, comparing classical and quantum adjoint solutions, and studying the scaling 
-behavior of the hybrid solver.
+HHL, comparing classical and quantum adjoint solutions, and convergence of the hybrid solver.
 
 Overall, this project explores the integration of quantum linear system algorithms 
 with PDE-constrained optimization as a step toward understanding the potential of 
