@@ -988,16 +988,17 @@ a:focus {
 
 /* shrink the whole carousel block */
 .carousel-shell {
-  width: 65%;
+  width: 85%;
   margin: 0 auto;
 }
 
-/* keep images fitting nicely inside */
-#results-carousel .item img,
-#results-carousel .item video {
-  width: 150%;
+/* full-bleed images placed directly in an .item (not inside a result-card grid) */
+#results-carousel .item > img,
+#results-carousel .item > video {
+  width: 100%;
   height: auto;
   display: block;
+  margin: 0 auto;
 }
 
 /* optional: slightly smaller caption */
@@ -1022,10 +1023,21 @@ a:focus {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
+.result-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 56px;
+  padding: 36px;
+  background: #f7f8fb;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
 .result-card {
   background: white;
   border-radius: 14px;
-  padding: 12px;
+  padding: 20px;
   text-align: center;
   border: 1px solid #e5e7eb;
 }
@@ -1038,11 +1050,23 @@ a:focus {
   background: white;
 }
 
+.result-grid-2 .result-card img {
+  height: auto;
+}
+
 .result-card p {
-  margin-top: 8px;
-  font-size: 0.95rem;
+  margin-top: 12px;
+  font-size: 1rem;
   font-weight: 600;
   color: #333;
+}
+
+.result-card .result-detail {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 .result-caption {
@@ -1060,7 +1084,8 @@ a:focus {
 
 /* Responsive layout for phones */
 @media screen and (max-width: 600px) {
-  .result-grid-6 {
+  .result-grid-6,
+  .result-grid-2 {
     grid-template-columns: 1fr;
   }
 

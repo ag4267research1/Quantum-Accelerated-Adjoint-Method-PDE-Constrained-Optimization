@@ -309,11 +309,11 @@ window.MathJax = {
       <!-- <video poster="" id="tree" autoplay controls muted loop height="100%" preload="metadata"> -->
         <!-- TODO: Add your video file path here -->
         <!-- <source src="static/videos/banner_video.mp4" type="video/mp4"> -->
-        <img src="static/images/classicalvsquantumpaths.png"/>
+        <img src="static/images/figures/classicalvsquantumpaths2.png"/>
       <!-- </video> -->
       <!-- TODO: Replace with your video description -->
       <h2 class="subtitle has-text-centered">
-        This figure shows a hybrid quantum–classical adjoint framework where the classical side performs PDE discretization, state solving, and optimization updates. The quantum path accelerates the adjoint computation using a QLSA and swap-test inner products to estimate the reduced gradient without reconstructing the full adjoint vector.
+        Both paths share the same classical preparation (PDE discretization, state solve, Jacobian and constraint-gradient assembly) and the same classical optimization loop. They differ only in the adjoint step: the classical path solves <code>(A<sup>k</sup>)<sup>T</sup>p<sup>k</sup> = g<sub>u</sub><sup>k</sup></code> and takes inner products directly, while the quantum path prepares <code>|p&#772;<sup>k</sup>&#10217;</code> via a QLSA and estimates each <code>&#10216;v<sub>i</sub><sup>k</sup>|p&#772;<sup>k</sup>&#10217;</code> with a swap test&mdash;avoiding full reconstruction of the adjoint vector.
       </h2>
     </div>
   </div>
@@ -329,7 +329,7 @@ window.MathJax = {
         <div class="content has-text-justified">
           <!-- TODO: Replace with your paper abstract -->
           <p>
-           PDE-constrained optimization problems arise in a wide range of scientific and engineering applications, including aerodynamic design, heat transfer, and inverse problems. The dominant computational cost in these problems stems from repeatedly solving large linear systems associated with discretized state and adjoint equations. Quantum linear system algorithms (QLSAs) offer exponential speedups with respect to the dimension of such systems under suitable assumptions, but their applicability to classical scientific computing is limited by the need to extract full classical solutions. In this work, we present a hybrid quantum--classical optimization framework that integrates the classical adjoint method with QLSA-based adjoint solves and swap-test-based inner product estimation. By computing reduced gradients without reconstructing the full adjoint vector, the proposed approach avoids quantum tomography and preserves the theoretical quantum advantage. By replacing the classical adjoint linear solve with a quantum solver, the complexity of our approach exhibits exponential speed-up with respect to number of state variables. Our algorithm is tested numerically using QISKIT simulator.
+           PDE-constrained optimization problems arise in a wide range of scientific and engineering applications, including aerodynamic design, heat transfer, and inverse problems. The dominant computational cost in these problems stems from repeatedly solving large linear systems associated with discretized state and adjoint equations. Quantum linear system algorithms (QLSAs) offer exponential speedups with respect to the dimension of such systems under suitable assumptions, but their applicability to classical scientific computing is limited by the need to extract full classical solutions. In this work, we present a hybrid quantum--classical optimization framework that integrates the classical adjoint method with QLSA-based adjoint solves and swap-test-based inner product estimation. By computing reduced gradients without reconstructing the full adjoint vector, the proposed approach avoids quantum tomography and preserves the theoretical quantum advantage. By replacing the classical adjoint linear solve with a quantum solver, the complexity of our approach exhibits exponential speed-up with respect to number of state variables. Our algorithm is tested numerically using Qiskit.
           </p>
         </div>
       </div>
@@ -354,29 +354,30 @@ with a quantum linear system algorithm (QLSA).
 </p>
 
 <p>
-In classical adjoint-based optimization, the adjoint variable <em>p</em> is obtained 
-by solving the linear system
+Throughout, <em>u</em> denotes the PDE state variable and <em>x</em> denotes the
+control variable. In classical adjoint-based optimization, the adjoint
+variable <em>p</em> is obtained by solving the linear system
 </p>
 
 $$
-A(u)^T p = \frac{\partial J}{\partial x}(x,u)
+A^T p = \frac{\partial J}{\partial u}(u,x)
 $$
 
 <p>
-where \(A(u)\) is the Jacobian of the discretized PDE constraint and 
-\(J(x,u)\) is the objective functional.
+where \(A = \partial c/\partial u\) is the Jacobian of the discretized PDE
+constraint with respect to the state, and \(J(u,x)\) is the objective functional.
 </p>
 
 <p>
-Once the adjoint vector is computed, the reduced gradient of the objective 
+Once the adjoint vector is computed, the reduced gradient of the objective
 with respect to the control variables is given by
 </p>
 
 $$
-(\nabla \hat{J}(u))_i =
-\frac{\partial J}{\partial u_i}
+(\nabla \hat{J}(x))_i =
+\frac{\partial J}{\partial x_i}
 -
-\left\langle p,\frac{\partial c}{\partial u_i} \right\rangle .
+\left\langle p,\frac{\partial c}{\partial x_i} \right\rangle .
 $$
 
 <p>
@@ -385,15 +386,15 @@ using a quantum linear system algorithm
 </p>
 
 $$
-|p\rangle \propto A^{-T} g_x ,
+|p\rangle \propto A^{-T} g_u ,
 $$
 
 <p>
-where \(g_x = \partial J / \partial x\).
-Instead of reconstructing the full adjoint vector, the algorithm computes 
+where \(g_u = \partial J / \partial u\).
+Instead of reconstructing the full adjoint vector, the algorithm computes
 the required inner products directly using quantum swap-test measurements.
-This avoids quantum state tomography and allows the reduced gradient 
-to be estimated while preserving the potential quantum speedup of the 
+This avoids quantum state tomography and allows the reduced gradient
+to be estimated while preserving the potential quantum speedup of the
 linear-system solve.
 </p>
 
@@ -415,39 +416,39 @@ linear-system solve.
 <ol>
 
 <li>
-<strong>Initialize:</strong> choose an initial control \(u^0\).
+<strong>Initialize:</strong> choose an initial control \(x^0\).
 </li>
 
 <li>
 <strong>State solve (classical):</strong> solve the discretized PDE
 \[
-c(x^k,u^k)=0
+c(u^k,x^k)=0
 \]
-to obtain the state \(x^k\).
+to obtain the state \(u^k\).
 </li>
 
 <li>
 <strong>Objective evaluation:</strong> compute the reduced objective
 \[
-\hat J(u^k)=J(x^k,u^k).
+\hat J(x^k)=J(u^k,x^k).
 \]
 </li>
 
 <li>
 <strong>Derivative assembly:</strong> form the Jacobian
 \[
-A^k=\frac{\partial c}{\partial x}(x^k,u^k)
+A^k=\frac{\partial c}{\partial u}(u^k,x^k)
 \]
 and the state gradient
 \[
-g_x^k=\frac{\partial J}{\partial x}(x^k,u^k).
+g_u^k=\frac{\partial J}{\partial u}(u^k,x^k).
 \]
 </li>
 
 <li>
 <strong>Quantum adjoint solve:</strong> prepare the adjoint state
 \[
-|p^k\rangle \propto (A^k)^{-T} g_x^k
+|p^k\rangle \propto (A^k)^{-T} g_u^k
 \]
 using a quantum linear system algorithm.
 </li>
@@ -455,7 +456,7 @@ using a quantum linear system algorithm.
 <li>
 <strong>Gradient estimation:</strong> estimate
 \[
-\left\langle p^k,\frac{\partial c}{\partial u_i}\right\rangle
+\left\langle p^k,\frac{\partial c}{\partial x_i}\right\rangle
 \]
 for each control variable using swap-test measurements.
 </li>
@@ -463,7 +464,7 @@ for each control variable using swap-test measurements.
 <li>
 <strong>Control update:</strong> update the control
 \[
-u^{k+1}=u^k-\alpha_k\nabla\hat J(u^k).
+x^{k+1}=x^k-\alpha_k\nabla\hat J(x^k).
 \]
 </li>
 
@@ -488,16 +489,20 @@ u^{k+1}=u^k-\alpha_k\nabla\hat J(u^k).
 
   \[
   T_{\text{iter}}
-  \approx
+  =
   O\!\left(
-  (m+1)\, s n \kappa \log\!\frac{1}{\varepsilon_s}
+  (m+1)\, s\, n_u\, \kappa \log\!\frac{1}{\varepsilon_s}
   \;+\;
-  n_u\,(\log n)\, s^2 \kappa^2 \varepsilon^{-3}
+  n_x n_u
+  \;+\;
+  \varepsilon_{\text{spectral}}^{-1}
+  \;+\;
+  n_x\,\log(n_u)\, s^2 \kappa^2\, \varepsilon_{\text{swap}}^{-2}\varepsilon_{\text{adjoint}}^{-1}
   \right).
   \]
 
   <p style="margin-top:10px;">
-    (First term: classical state solves + line search. Second term: quantum adjoint preparation and swap-test gradient estimation.)
+    (First term: classical state solves + line search. Middle terms: classical derivative assembly and the optional quantum spectral gradient estimate. Last term: quantum adjoint preparation and swap-test gradient estimation, repeated for each of the \(n_x\) control variables.)
   </p>
 
   <p style="margin-top:12px;">
@@ -505,12 +510,14 @@ u^{k+1}=u^k-\alpha_k\nabla\hat J(u^k).
   </p>
 
   <ul>
-    <li><strong>n</strong> – number of state variables (grid unknowns in the PDE discretization)</li>
-    <li><strong>n<sub>u</sub></strong> – number of control variables in the optimization problem</li>
+    <li><strong>n<sub>u</sub></strong> – number of state variables (grid unknowns in the PDE discretization)</li>
+    <li><strong>n<sub>x</sub></strong> – number of control variables in the optimization problem</li>
     <li><strong>s</strong> – sparsity of the Jacobian matrix (maximum number of nonzero entries per row)</li>
-    <li><strong>κ</strong> – denotes an upper bound on the condition number the of the state Jacobian</li>
+    <li><strong>κ</strong> – denotes an upper bound on the condition number of the state Jacobian</li>
     <li><strong>ε<sub>s</sub></strong> – tolerance used for the classical Krylov solver in the state equation</li>
-    <li><strong>1/ε</strong> – accuracy parameter used in the quantum routines</li>
+    <li><strong>ε<sub>spectral</sub></strong> – accuracy of the (optional) quantum spectral control-gradient estimate</li>
+    <li><strong>ε<sub>adjoint</sub></strong> – accuracy to which the QLSA prepares the adjoint state</li>
+    <li><strong>ε<sub>swap</sub></strong> – additive error of the swap-test inner-product estimate</li>
     <li><strong>m</strong> – maximum number of additional state solves performed during the line search</li>
   </ul>
 
@@ -523,18 +530,18 @@ u^{k+1}=u^k-\alpha_k\nabla\hat J(u^k).
 Convergence of the Hybrid Optimization Algorithm
 </div>
 
-<p><strong>A1.</strong> The reduced objective 
-\( \hat{J}_h : \mathbb{R}^{n_u} \to \mathbb{R} \) 
+<p><strong>A1.</strong> The reduced objective
+\( \hat{J}_h : \mathbb{R}^{n_x} \to \mathbb{R} \)
 is continuously differentiable and bounded below.</p>
 
-<p><strong>A2.</strong> The gradient 
-\( \nabla \hat{J}_h \) 
+<p><strong>A2.</strong> The gradient
+\( \nabla \hat{J}_h \)
 is Lipschitz continuous.</p>
 
 <p><strong>A3.</strong> The inexact reduced gradient satisfies</p>
 
 \[
-\|e^k\|_2 \le \rho \, \|\nabla \hat{J}_h(u^k)\|_2 .
+\|e^k\|_2 \le \rho \, \|\nabla \hat{J}_h(x^k)\|_2 .
 \]
 
 <p><strong>A4.</strong> The step sizes \( \alpha_k \) satisfy the bounded
@@ -543,10 +550,10 @@ step-size conditions of Lemma 5.3.</p>
 <p><strong>Result.</strong> Under these assumptions</p>
 
 \[
-\lim_{k\to\infty}\|\nabla \hat{J}_h(u^k)\|_2 = 0 ,
+\lim_{k\to\infty}\|\nabla \hat{J}_h(x^k)\|_2 = 0 ,
 \]
 
-<p>and every accumulation point of \(u^k\) is a critical point of \( \hat{J}_h \).</p>
+<p>and every accumulation point of \(x^k\) is a critical point of \( \hat{J}_h \).</p>
 
 </div>
 
@@ -580,6 +587,8 @@ step-size conditions of Lemma 5.3.</p>
       h\bigl(u-T_\infty\bigr)
       =
       Bx,
+      \qquad
+      u(0)=u(1)=0,
       \]
 
       <p>
@@ -620,90 +629,182 @@ step-size conditions of Lemma 5.3.</p>
 
 </section>
 
-      
+
       <div class="carousel-shell">
         <div id="results-carousel" class="carousel results-carousel">
 
-          <!-- Carousel Item 1: Six results in one block -->
+          <!-- Item: hero comparison across backends -->
           <div class="item">
-            <div class="result-grid-6">
-
-              <div class="result-card">
-                <img src="static/images/output/classical/heat/solve1/classical_condition_number_vs_iteration.png" alt="Result 1" loading="lazy">
-                <p>Fig 1 (classical) </p>
-              </div>
-
-              <div class="result-card">
-                <img src="static/images/output/classical/heat/solve1/classical_gradient_vs_iteration.png" alt="Result 2" loading="lazy">
-                <p>Fig 2 (classical)</p>
-              </div>
-
-              <div class="result-card">
-                <img src="static/images/output/classical/heat/solve1/classical_objective_vs_iteration.png" alt="Result 3" loading="lazy">
-                <p>Fig 3 (classical)</p>
-              </div>
-
-              <div class="result-card">
-                <img src="static/images/output/hybrid/heat/solve_hybrid_1e_3__nu_16___nx_2_NoSpectralGradient/hybrid_condition_number_vs_iteration.png" alt="Result 4" loading="lazy">
-                <p>Fig 4 (hybrid)</p>
-              </div>
-
-              <div class="result-card">
-                <img src="static/images/output/hybrid/heat/solve_hybrid_1e_3__nu_16___nx_2_NoSpectralGradient/hybrid_gradient_vs_iteration.png" alt="Result 5" loading="lazy">
-                <p>Fig 5 (hybrid)</p>
-              </div>
-
-              <div class="result-card">
-                <img src="static/images/output/hybrid/heat/solve_hybrid_1e_3__nu_16___nx_2_NoSpectralGradient/hybrid_objective_vs_iteration.png" alt="Result 6" loading="lazy">
-                <p>Fig 6 (hybrid)</p>
-              </div>
-
-            </div>
-
+            <img src="static/images/figures/gradient_vs_iteration_superimposed_0to57.png" alt="Gradient norm vs iteration: classical, hybrid on Aer, hybrid on IonQ simulator, and hybrid on real IBM Marrakesh hardware" loading="lazy">
             <h2 class="subtitle has-text-centered result-caption">
-              Heat Model Comparison
+              Gradient-norm convergence on the heat-equation problem (<code>n<sub>u</sub>=4</code> state variables,
+              <code>n<sub>x</sub>=2</code> control variables), comparing the fully classical adjoint solve
+              against the hybrid solver run on the Aer simulator, the IonQ simulator, and real IBM Quantum hardware
+              (<code>ibm_marrakesh</code>). The Aer and IonQ simulator runs track the classical curve almost exactly;
+              the real-hardware run follows the same overall descent despite the added shot noise of present-day
+              quantum hardware.
             </h2>
           </div>
 
-
-          <!-- Carousel Item 2: Another six results -->
+          <!-- Item: Aer heat sweep -->
           <div class="item">
-            <div class="result-grid-6">
-
-              <div class="result-card">
-                <img src="static/images/output/classical/elliptic/exp3/elliptic_classical_n16_condition_number_vs_iteration.png" alt="Result 7" loading="lazy">
-                <p>Fig 1 (classical)</p>
-              </div>
-
-              <div class="result-card">
-                <img src="static/images/output/classical/elliptic/exp3/elliptic_classical_n16_gradient_vs_iteration.png" alt="Result 8" loading="lazy">
-                <p>Fig 2 (classical)</p>
-              </div>
-
-              <div class="result-card">
-                <img src="static/images/output/classical/elliptic/exp3/elliptic_classical_n16_objective_vs_iteration.png" alt="Result 9" loading="lazy">
-                <p>Fig 3 (classical)</p>
-              </div>
-
-              <div class="result-card">
-                <img src="static/images/output/hybrid/precision_1e_5/elliptic/No_Spectral/exp3/elliptic_hybrid_n16_condition_number_vs_iteration.png" alt="Result 10" loading="lazy">
-                <p>Fig 4 (hybrid)</p>
-              </div>
-
-              <div class="result-card">
-                <img src="static/images/output/hybrid/precision_1e_5/elliptic/No_Spectral/exp3/elliptic_hybrid_n16_gradient_vs_iteration.png" alt="Result 11" loading="lazy">
-                <p>Fig 5 (hybrid)</p>
-              </div>
-
-              <div class="result-card">
-                <img src="static/images/output/hybrid/precision_1e_5/elliptic/No_Spectral/exp3/elliptic_hybrid_n16_objective_vs_iteration.png" alt="Result 12" loading="lazy">
-                <p>Fig 6 (hybrid)</p>
-              </div>
-
-            </div>
-
+            <img src="static/images/figures/AER/Nonlinear_heat/convergence_curves.png" alt="Gradient norm convergence curves for the heat equation on the Aer simulator across n_u, n_x, and shot count" loading="lazy">
             <h2 class="subtitle has-text-centered result-caption">
-              Elliptic Model Comparison
+              Hybrid solver convergence on the nonlinear heat equation (Qiskit Aer simulator), swept over
+              state-variable count <code>n<sub>u</sub> &isin; {4, 8, 16}</code> (columns), control-variable count
+              <code>n<sub>x</sub> &isin; {4, 8, 16}</code> (rows), and shot count &isin; {2048, 4096, 8192, 16384}.
+              All configurations converge to a shot-noise floor that is largely independent of problem size.
+            </h2>
+          </div>
+
+          <!-- Item: final metrics grid, heat/Aer -->
+          <div class="item">
+            <div class="result-grid-2">
+              <div class="result-card">
+                <img src="static/images/figures/AER/Nonlinear_heat/gradient_nx_nu_radiant_map.png" alt="Final gradient norm across n_u, n_x, shot count" loading="lazy">
+                <p>Final &Vert;&nabla;&#308;&Vert;</p>
+                <p class="result-detail">Final gradient norm reached by the hybrid solver, tabulated over state count <code>n<sub>u</sub></code> and control count <code>n<sub>x</sub></code>, one panel per shot count. Lower (greener) values indicate a more fully converged optimum.</p>
+              </div>
+              <div class="result-card">
+                <img src="static/images/figures/AER/Nonlinear_heat/condition_number_nx_nu_map.png" alt="Final condition number across n_u, n_x, shot count" loading="lazy">
+                <p>Final &kappa;</p>
+                <p class="result-detail">Final adjoint condition number &kappa; over the same <code>(n<sub>u</sub>, n<sub>x</sub>)</code> grid. &kappa; stays essentially flat across shot counts, showing it is set by the PDE discretization rather than by the quantum measurement budget.</p>
+              </div>
+            </div>
+            <h2 class="subtitle has-text-centered result-caption">
+              Final gradient norm and final adjoint condition number reached by the hybrid solver &mdash; heat model, Aer simulator.
+            </h2>
+          </div>
+
+          <!-- Elliptic model, Aer simulator: Experiments 1-5 -->
+
+          <div class="item">
+            <img src="static/images/figures/AER/Elliptic/Exp1/convergence_curves.png" alt="Gradient norm convergence curves for the elliptic model, Experiment 1, Aer simulator" loading="lazy">
+            <h2 class="subtitle has-text-centered result-caption">
+              Hybrid solver convergence on the elliptic model (Experiment 1, Qiskit Aer simulator), swept over
+              <code>n<sub>u</sub></code>, <code>n<sub>x</sub></code>, and shot count.
+            </h2>
+          </div>
+
+          <div class="item">
+            <div class="result-grid-2">
+              <div class="result-card">
+                <img src="static/images/figures/AER/Elliptic/Exp1/gradient_nx_nu_map.png" alt="Final gradient norm across n_u, n_x, shot count, elliptic model, Experiment 1" loading="lazy">
+                <p>Final &Vert;&nabla;&#308;&Vert;</p>
+                <p class="result-detail">Final gradient norm reached by the hybrid solver on the elliptic model (Experiment 1), tabulated over state count <code>n<sub>u</sub></code> and control count <code>n<sub>x</sub></code>, one panel per shot count. Lower (greener) values indicate a more fully converged optimum.</p>
+              </div>
+              <div class="result-card">
+                <img src="static/images/figures/AER/Elliptic/Exp1/condition_number_nx_nu_map.png" alt="Final condition number across n_u, n_x, shot count, elliptic model, Experiment 1" loading="lazy">
+                <p>Final &kappa;</p>
+                <p class="result-detail">Final adjoint condition number &kappa; over the same <code>(n<sub>u</sub>, n<sub>x</sub>)</code> grid for Experiment 1. &kappa; stays essentially flat across shot counts, showing it is set by the PDE discretization rather than by the quantum measurement budget.</p>
+              </div>
+            </div>
+            <h2 class="subtitle has-text-centered result-caption">
+              Final gradient norm and final adjoint condition number &mdash; elliptic model, Experiment 1, Aer simulator.
+            </h2>
+          </div>
+
+          <div class="item">
+            <img src="static/images/figures/AER/Elliptic/Exp2/convergence_curves.png" alt="Gradient norm convergence curves for the elliptic model, Experiment 2, Aer simulator" loading="lazy">
+            <h2 class="subtitle has-text-centered result-caption">
+              Hybrid solver convergence on the elliptic model (Experiment 2, Qiskit Aer simulator), swept over
+              <code>n<sub>u</sub></code>, <code>n<sub>x</sub></code>, and shot count.
+            </h2>
+          </div>
+
+          <div class="item">
+            <div class="result-grid-2">
+              <div class="result-card">
+                <img src="static/images/figures/AER/Elliptic/Exp2/gradient_nx_nu_map.png" alt="Final gradient norm across n_u, n_x, shot count, elliptic model, Experiment 2" loading="lazy">
+                <p>Final &Vert;&nabla;&#308;&Vert;</p>
+                <p class="result-detail">Final gradient norm reached by the hybrid solver on the elliptic model (Experiment 2), tabulated over state count <code>n<sub>u</sub></code> and control count <code>n<sub>x</sub></code>, one panel per shot count. Lower (greener) values indicate a more fully converged optimum.</p>
+              </div>
+              <div class="result-card">
+                <img src="static/images/figures/AER/Elliptic/Exp2/condition_number_nx_nu_map.png" alt="Final condition number across n_u, n_x, shot count, elliptic model, Experiment 2" loading="lazy">
+                <p>Final &kappa;</p>
+                <p class="result-detail">Final adjoint condition number &kappa; over the same <code>(n<sub>u</sub>, n<sub>x</sub>)</code> grid for Experiment 2. &kappa; stays essentially flat across shot counts, showing it is set by the PDE discretization rather than by the quantum measurement budget.</p>
+              </div>
+            </div>
+            <h2 class="subtitle has-text-centered result-caption">
+              Final gradient norm and final adjoint condition number &mdash; elliptic model, Experiment 2, Aer simulator.
+            </h2>
+          </div>
+
+          <div class="item">
+            <img src="static/images/figures/AER/Elliptic/Exp3/convergence_curves.png" alt="Gradient norm convergence curves for the elliptic model, Experiment 3, Aer simulator" loading="lazy">
+            <h2 class="subtitle has-text-centered result-caption">
+              Hybrid solver convergence on the elliptic model (Experiment 3, Qiskit Aer simulator), swept over
+              <code>n<sub>u</sub></code>, <code>n<sub>x</sub></code>, and shot count.
+            </h2>
+          </div>
+
+          <div class="item">
+            <div class="result-grid-2">
+              <div class="result-card">
+                <img src="static/images/figures/AER/Elliptic/Exp3/gradient_nx_nu_map.png" alt="Final gradient norm across n_u, n_x, shot count, elliptic model, Experiment 3" loading="lazy">
+                <p>Final &Vert;&nabla;&#308;&Vert;</p>
+                <p class="result-detail">Final gradient norm reached by the hybrid solver on the elliptic model (Experiment 3), tabulated over state count <code>n<sub>u</sub></code> and control count <code>n<sub>x</sub></code>, one panel per shot count. Lower (greener) values indicate a more fully converged optimum.</p>
+              </div>
+              <div class="result-card">
+                <img src="static/images/figures/AER/Elliptic/Exp3/condition_number_nx_nu_map.png" alt="Final condition number across n_u, n_x, shot count, elliptic model, Experiment 3" loading="lazy">
+                <p>Final &kappa;</p>
+                <p class="result-detail">Final adjoint condition number &kappa; over the same <code>(n<sub>u</sub>, n<sub>x</sub>)</code> grid for Experiment 3. &kappa; stays essentially flat across shot counts, showing it is set by the PDE discretization rather than by the quantum measurement budget.</p>
+              </div>
+            </div>
+            <h2 class="subtitle has-text-centered result-caption">
+              Final gradient norm and final adjoint condition number &mdash; elliptic model, Experiment 3, Aer simulator.
+            </h2>
+          </div>
+
+          <div class="item">
+            <img src="static/images/figures/AER/Elliptic/Exp4/convergence_curves.png" alt="Gradient norm convergence curves for the elliptic model, Experiment 4, Aer simulator" loading="lazy">
+            <h2 class="subtitle has-text-centered result-caption">
+              Hybrid solver convergence on the elliptic model (Experiment 4, Qiskit Aer simulator), swept over
+              <code>n<sub>u</sub></code>, <code>n<sub>x</sub></code>, and shot count.
+            </h2>
+          </div>
+
+          <div class="item">
+            <div class="result-grid-2">
+              <div class="result-card">
+                <img src="static/images/figures/AER/Elliptic/Exp4/gradient_nx_nu_map.png" alt="Final gradient norm across n_u, n_x, shot count, elliptic model, Experiment 4" loading="lazy">
+                <p>Final &Vert;&nabla;&#308;&Vert;</p>
+                <p class="result-detail">Final gradient norm reached by the hybrid solver on the elliptic model (Experiment 4), tabulated over state count <code>n<sub>u</sub></code> and control count <code>n<sub>x</sub></code>, one panel per shot count. Lower (greener) values indicate a more fully converged optimum.</p>
+              </div>
+              <div class="result-card">
+                <img src="static/images/figures/AER/Elliptic/Exp4/condition_number_nx_nu_map.png" alt="Final condition number across n_u, n_x, shot count, elliptic model, Experiment 4" loading="lazy">
+                <p>Final &kappa;</p>
+                <p class="result-detail">Final adjoint condition number &kappa; over the same <code>(n<sub>u</sub>, n<sub>x</sub>)</code> grid for Experiment 4. &kappa; stays essentially flat across shot counts, showing it is set by the PDE discretization rather than by the quantum measurement budget.</p>
+              </div>
+            </div>
+            <h2 class="subtitle has-text-centered result-caption">
+              Final gradient norm and final adjoint condition number &mdash; elliptic model, Experiment 4, Aer simulator.
+            </h2>
+          </div>
+
+          <div class="item">
+            <img src="static/images/figures/AER/Elliptic/Exp5/convergence_curves.png" alt="Gradient norm convergence curves for the elliptic model, Experiment 5, Aer simulator" loading="lazy">
+            <h2 class="subtitle has-text-centered result-caption">
+              Hybrid solver convergence on the elliptic model (Experiment 5, Qiskit Aer simulator), swept over
+              <code>n<sub>u</sub></code>, <code>n<sub>x</sub></code>, and shot count.
+            </h2>
+          </div>
+
+          <div class="item">
+            <div class="result-grid-2">
+              <div class="result-card">
+                <img src="static/images/figures/AER/Elliptic/Exp5/gradient_nx_nu_map.png" alt="Final gradient norm across n_u, n_x, shot count, elliptic model, Experiment 5" loading="lazy">
+                <p>Final &Vert;&nabla;&#308;&Vert;</p>
+                <p class="result-detail">Final gradient norm reached by the hybrid solver on the elliptic model (Experiment 5), tabulated over state count <code>n<sub>u</sub></code> and control count <code>n<sub>x</sub></code>, one panel per shot count. Lower (greener) values indicate a more fully converged optimum.</p>
+              </div>
+              <div class="result-card">
+                <img src="static/images/figures/AER/Elliptic/Exp5/condition_number_nx_nu_map.png" alt="Final condition number across n_u, n_x, shot count, elliptic model, Experiment 5" loading="lazy">
+                <p>Final &kappa;</p>
+                <p class="result-detail">Final adjoint condition number &kappa; over the same <code>(n<sub>u</sub>, n<sub>x</sub>)</code> grid for Experiment 5. &kappa; stays essentially flat across shot counts, showing it is set by the PDE discretization rather than by the quantum measurement budget.</p>
+              </div>
+            </div>
+            <h2 class="subtitle has-text-centered result-caption">
+              Final gradient norm and final adjoint condition number &mdash; elliptic model, Experiment 5, Aer simulator.
             </h2>
           </div>
 
