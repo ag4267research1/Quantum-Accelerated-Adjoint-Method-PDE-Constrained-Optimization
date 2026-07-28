@@ -17,14 +17,8 @@ solver:
   mode: hybrid
 
 quantum:
-  backend_mode: ibm_real
+  backend_mode: ibm
   shots: 4096
-  spectral_points: 8
-  delta: 0.001
-  use_preconditioning: false
-  ibm_token: "YOUR_IBM_TOKEN_HERE"
-  ibm_channel: "ibm_quantum"
-  ibm_instance: "ibm-q/open/main"
   ibm_backend_name: null
   ibm_use_least_busy: true
 

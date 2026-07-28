@@ -20,9 +20,8 @@ solver:
 quantum:
   backend_mode: aer
   shots: 8192
-  spectral_points: 16
-  delta: 0.001
-  use_preconditioning: false
+  ibm_backend_name: null
+  ibm_use_least_busy: true
 
 scaling:
   sizes: [4, 8, 16]

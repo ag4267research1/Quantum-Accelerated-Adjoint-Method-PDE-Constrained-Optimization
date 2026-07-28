@@ -5,7 +5,7 @@ model:
   nx: 4
 
 optimizer:
-  max_iter: 500
+  max_iter: 10
   alpha: 70
   use_backtracking: true
   armijo_c: 1e-6
@@ -19,16 +19,15 @@ solver:
 quantum:
   backend_mode: aer
   shots: 8192
-  spectral_points: 16
-  delta: 0.001
-  use_preconditioning: false
+  ibm_backend_name: null
+  ibm_use_least_busy: true
 
 scaling:
   sizes: [4, 8, 16]
   iterations: 1
 
 plots:
-  show_solution: true
+  show_solution: false
   show_scaling: false
-  show_superimposed_histories: false
-  output_dir: output/heat/simulator
+  show_superimposed_histories: true
+  output_dir: output/git_today

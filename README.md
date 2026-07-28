@@ -1,169 +1,109 @@
-# hybrid-PDECO
+# Hybrid PDECO: Quantum-Accelerated PDE-Constrained Optimization
 
+A hybrid quantum–classical framework for PDE-constrained optimization that replaces the classical adjoint linear solve with a Quantum Linear System Algorithm (HHL).
 
-This project implements a hybrid quantum--classical framework for solving 
-PDE-constrained optimization problems using Quantum Linear System Algorithms (QLSAs). 
-In particular, we use an existing QLSA software implementation that provides 
-quantum circuit constructions and execution pipelines for solving linear systems 
-using the HHL (Harrow--Hassidim--Lloyd) algorithm.
+![Classical vs Quantum Adjoint Paths](assets/classical_vs_quantum_paths.png)
 
-In many PDE-constrained optimization problems, computing gradients requires solving 
-large linear systems of the form
+## Overview
 
-$$
-A^T p = \frac{\partial J}{\partial u},
-$$
+Gradient-based PDE-constrained optimization requires solving an adjoint linear system at every iteration:
 
-where $A$ is the Jacobian of the PDE residual with respect to the state variables 
-and $p$ is the adjoint variable. Classical approaches solve these systems using 
-numerical linear algebra methods whose computational cost scales polynomially with 
-the system size.
+$$A^T p = \frac{\partial J}{\partial u}$$
 
-In this work, we investigate whether quantum linear system algorithms can accelerate 
-this step. The implementation integrates a classical PDE solver with a QLSA-based 
-linear system solver by embedding the HHL algorithm within the adjoint computation 
-of the optimization loop.
+where $A$ is the Jacobian of the PDE residual and $p$ is the adjoint variable. This project embeds the HHL quantum algorithm inside that adjoint solve, keeping the rest of the optimization loop classical. The diagram above shows both the classical and quantum adjoint paths.
 
-The computational workflow follows the hybrid pipeline
+**Supported backends:** Aer (Qiskit simulator) · IBM Quantum (real hardware)
 
-$$
-\text{PDE Residual Solver}
-\rightarrow
-\text{Jacobian Construction}
-\rightarrow
-\text{Adjoint Linear System}
-\rightarrow
-\text{Quantum Linear Solver (HHL)}
-\rightarrow
-\text{Gradient Computation}
-\rightarrow
-\text{Optimization Update}.
-$$
+## Results
 
-Experiments in this project focus on validating adjoint gradients computed using 
-HHL, comparing classical and quantum adjoint solutions, and convergence of the hybrid solver.
+Hybrid solver results on the nonlinear heat equation (Qiskit Aer simulator) across problem sizes $n_x, n_u \in \{4, 8, 16\}$ and shot counts $\in \{2048, 4096, 8192, 16384\}$:
 
-Overall, this project explores the integration of quantum linear system algorithms 
-with PDE-constrained optimization as a step toward understanding the potential of 
-quantum acceleration in scientific computing.
+**Gradient norm convergence curves** ($n_u$ columns × $n_x$ rows, varying shot count):
 
+![Convergence curves](assets/convergence_curves.png)
+
+**Final gradient norm** and **final condition number** across the $(n_x, n_u)$ grid:
+
+| Final $\|\|\nabla \hat{J}\|\|$ | Final $\kappa$ |
+|:------------------------------:|:--------------:|
+| ![Gradient map](assets/gradient_nx_nu_radiant_map.png) | ![Condition number map](assets/condition_number_nx_nu_map.png) |
 
 ## Project Structure
-<!-- tree -I "__pycache__|*.pyc" -->
 
 ```
-project-root
+project-root/
 ├── README.md
-├── requirements.txt
-├── LICENSE
-├── hhl.py
-├── post_processor.py
 ├── run.py
-├── configs
-│   ├── elliptic_classical.yaml
-│   ├── elliptic_hybrid.yaml
-│   ├── heat_classical.yaml
-│   └── heat_hybrid.yaml
-├── old_runfiles
-│   ├── run.py
-│   └── run2.py
-└── src
-    ├── classical
+├── requirements.txt
+├── configs/
+│   ├── heat_simulator.yaml       # heat equation, Aer simulator
+│   ├── elliptic_simulator.yaml   # elliptic equation, Aer simulator
+│   └── heat_ibm_real.yaml        # heat equation, real IBM backend
+├── assets/                       # diagrams and result figures
+└── src/
+    ├── classical/
     │   └── classical_solver.py
-    ├── quantum
-    │   ├── qlsa_solver.py
-    │   ├── swap_test.py
-    │   └── spectral_gradient.py
-    ├── models
+    ├── models/
     │   ├── elliptic_model.py
+    │   ├── elliptic2_model.py
     │   └── heat_model.py
-    ├── optimization
+    ├── optimization/
     │   └── optimizer.py
-    └── experiments
+    ├── quantum/
+    │   ├── qlsa_solver.py
+    │   ├── spectral_gradient.py
+    │   └── swap_test.py
+    └── experiments/
         ├── elliptic_experiment.py
+        ├── elliptic2_experiment.py
         └── heat_experiment.py
 ```
 
+## Installation
 
-## Environment Setup
-
-This project uses Python and several scientific computing and quantum simulation libraries.  
-We recommend using a **Conda environment** to ensure all dependencies are installed correctly.
-
-### 1. Create a Conda Environment
-
-Create a new environment with Python 3.10:
+### 1. Create and activate a Conda environment
 
 ```bash
 conda create -n hpdeco python=3.10
-```
-
-### 2. Activate the Environment
-
-```bash
 conda activate hpdeco
 ```
-<!--- pipreqs . --force --mode no-pin --->
-### 3. Install Project Dependencies
 
-Install the required Python packages listed in `requirements.txt`:
+### 2. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
+### 3. Install QLSAs
 
-### 4. Clone the QLSA Repository
-
-This project relies on the **QLSA framework** for implementing quantum linear system algorithms such as the HHL algorithm.
-
-Clone the repository:
+This project uses the [QLSAs](https://github.com/QCOL-LU/QLSAs) framework for the HHL implementation. Clone and install it in editable mode:
 
 ```bash
 git clone https://github.com/QCOL-LU/QLSAs.git
+cd QLSAs && pip install -e . && cd ..
 ```
 
-### 5. Install the Repository in Editable Mode
-
-Navigate into the repository and install it in editable mode so that any modifications to the source code take effect immediately.
+## Running
 
 ```bash
-cd QLSAs
-pip install -e .
+python run.py configs/heat_simulator.yaml
 ```
 
-Installing in editable mode allows Python to use the **local source files directly**, which is necessary because this project modifies the HHL implementation.
+Pass any config file from `configs/` as the argument. The experiment type, model, backend, and output path are all controlled by the YAML.
 
-### 6. Replace the HHL Implementation
+## Supported Backends
 
-This project includes a modified `hhl.py` file. Replace the default implementation in the QLSA repository with the version provided in this repository.
+| Backend | `backend_mode` | Notes |
+|---------|----------------|-------|
+| Qiskit Aer (simulator) | `aer` | Default; no credentials needed |
+| IBM Quantum (real hardware) | `ibm` | Set `ibm_backend_name` or use `ibm_use_least_busy: true` |
 
-Copy the file:
+Set the backend in the config:
 
-```bash
-cp hhl.py QLSAs/src/qlsas/algorithms/hhl/hhl.py
+```yaml
+quantum:
+  backend_mode: ibm   # or aer
+  shots: 4096
+  ibm_backend_name: null   # set a specific backend name, or leave null to use least busy
+  ibm_use_least_busy: true
 ```
-
-Alternatively, manually replace the file located at:
-
-```
-QLSAs/src/qlsas/algorithms/hhl/hhl.py
-```
-
-with the `hhl.py` file included in this project.
-
-### 7. Verify Installation
-
-After completing the steps above, you can test the installation by running:
-
-```bash
-python run.py configs/heat_hybrid.yaml
-```
-
-If the installation is successful, the hybrid solver will run using the modified HHL implementation.
-
-
-### Notes
-
-- The hybrid solver relies on the **QLSA framework** for implementing the HHL algorithm.
-- Quantum circuits are executed using **Qiskit simulators** .

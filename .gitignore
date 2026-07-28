@@ -1,13 +1,16 @@
 # Ignore everything
 *
 
-# Un-ignore the four tracked paths
+# Un-ignore tracked paths
 !src/
 !src/**
 !configs/
 !configs/**
+!assets/
+!assets/**
 !README.md
 !run.py
+!requirements.txt
 !.gitignore
 
 # Re-ignore common junk inside src/ and configs/
