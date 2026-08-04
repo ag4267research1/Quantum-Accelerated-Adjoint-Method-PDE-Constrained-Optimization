@@ -21,3 +21,8 @@
 
 # Explicitly ignored folders
 configs2/
+
+# elliptic1 (superseded by elliptic2 - unbounded condition number, not used)
+src/models/elliptic_model.py
+src/experiments/elliptic_experiment.py
+configs/elliptic_simulator.yaml
